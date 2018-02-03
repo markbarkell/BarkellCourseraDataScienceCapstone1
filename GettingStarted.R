@@ -35,7 +35,7 @@ charCountInLongestLineOfFile <- function(filename) {
 }
 
 maxBlogChars <- charCountInLongestLineOfFile(enUsBlogsPath)
-maxTwitterChars <- charCountInLongestLineOfFile(enUsNewsPath)
+maxTwitterChars <- charCountInLongestLineOfFile(enUsTwitterPath)
  maxNewsChars <- charCountInLongestLineOfFile(enUsNewsPath)
 
 print(paste("Max character count of the file english blogs", maxBlogChars))
