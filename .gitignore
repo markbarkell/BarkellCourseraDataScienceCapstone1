@@ -1,3 +1,9 @@
+# Make sure we don't commit the zip files -- otherwise the git source code control repository may become too large:
+*.zip
+# Once the Coursera-SwiftKey.zip is uncompressed and extracted the data is held in a directory
+# named final/.  Don't want to commit all of that data to a git repository.
+final/
+
 # History files
 .Rhistory
 .Rapp.history
