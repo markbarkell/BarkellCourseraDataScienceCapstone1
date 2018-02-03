@@ -26,18 +26,31 @@ if (!file.exists(enUsBlogsPath)) {
 enUsTwitterPath <- "final/en_US/en_US.twitter.txt"
 enUsNewsPath <- "final/en_US/en_US.news.txt"
 
-charCountInLongestLineOfFile <- function(filename) {
+linesOfFile <- function(filename) {
   f = file(filename, open="r")
-  lines = readLines(f)
+  lines <- readLines(f)
   close(f)
+  return (lines)
+}
+
+charCountInLongestLineOfFile <- function(filename) {
+  lines <- linesOfFile(filename)
   maxLineCount <- max(sapply(lines, function(x) {nchar(x)}))
   return (maxLineCount)
 }
 
 maxBlogChars <- charCountInLongestLineOfFile(enUsBlogsPath)
 maxTwitterChars <- charCountInLongestLineOfFile(enUsTwitterPath)
- maxNewsChars <- charCountInLongestLineOfFile(enUsNewsPath)
+maxNewsChars <- charCountInLongestLineOfFile(enUsNewsPath)
 
 print(paste("Max character count of the file english blogs", maxBlogChars))
 print(paste("Max character count of the file english news", maxNewsChars))
 print(paste("Max character count of the file english twitter", maxTwitterChars))
+
+linesInTwitter <-linesOfFile(enUsTwitterPath)
+linesOfTwitterHavingTextLove <- sum(grepl("love", linesInTwitter))
+linesOfTwitterHavingTextHate <- sum(grepl("hate", linesInTwitter))
+
+print(paste("Ratio of love vs hate", linesOfTwitterHavingTextLove/linesOfTwitterHavingTextHate))
+
+grep("biostats", linesInTwitter)
