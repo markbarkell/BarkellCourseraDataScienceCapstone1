@@ -45,4 +45,56 @@ simplisticvalidationBarkellr20180203ngramgen <- function() {
   print(barkellr20180203ngramgen(3, c("A", "B")))
 }
 
-simplisticvalidationBarkellr20180203ngramgen()
+#simplisticvalidationBarkellr20180203ngramgen()
+
+
+urlOfCapstoneSeedData <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
+fileNameOfCapstoneSeedData <- "Coursera-SwiftKey.zip"
+if (!file.exists(fileNameOfCapstoneSeedData)) {
+  download.file(urlOfCapstoneSeedData, fileNameOfCapstoneSeedData)
+}
+enUsBlogsPath <- "final/en_US/en_US.blogs.txt"
+if (!file.exists(enUsBlogsPath)) {
+  unzip(fileNameOfCapstoneSeedData)
+}
+
+enUsTwitterPath <- "final/en_US/en_US.twitter.txt"
+enUsNewsPath <- "final/en_US/en_US.news.txt"
+
+linesOfFile <- function(filename) {
+  f = file(filename, open="r")
+  lines <- readLines(f)
+  close(f)
+  return (lines)
+}
+
+blogFeed <- linesOfFile(enUsBlogsPath)
+twitterFeed <- linesOfFile(enUsTwitterPath)
+newsFeed <- linesOfFile(enUsNewsPath)
+
+splity <- function(x) { 
+  strsplit(paste0(x, " "), " +") 
+}
+
+grammy <- function (n, x) { 
+  s <- splity(x)[[1]]
+  barkellr20180203ngramgen(n, s)
+}
+
+grammy2 <- function(x) {
+  grammy(2, x)
+}
+
+grammy3 <- function(x) {
+  grammy(3, x)
+}
+
+twoGramsBlogFeed <- lapply(blogFeed, grammy2)
+threeGramsBlogFeed <- lapply(blogFeed, grammy3)
+twoGramNewsFeed <- lapply(newsFeed, grammy2)
+threeGramNewsFeed <- lapply(newsFeed, grammy3)
+twoGramsNewsFeed <- lapply(twitterFeed, grammy2)
+threeGramsNewsFeed <- lapply(twitterFeed, grammy3)
+
+
+
