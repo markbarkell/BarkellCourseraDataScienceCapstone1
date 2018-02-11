@@ -12,6 +12,11 @@
 # Yes, I know that there is an n-gram package in CRAN, but, it takes in
 # random seed values as input.  I'm not ready to worry about that yet.
 
+
+library(dplyr)
+library(hash)
+library(sqldf)
+
 barkellr20180203ngramgen <- function(n, words) {
   r <- vector()
   wordLen <- length(words)
@@ -93,8 +98,8 @@ twoGramsBlogFeed <- lapply(blogFeed, grammy2)
 threeGramsBlogFeed <- lapply(blogFeed, grammy3)
 twoGramNewsFeed <- lapply(newsFeed, grammy2)
 threeGramNewsFeed <- lapply(newsFeed, grammy3)
-twoGramsNewsFeed <- lapply(twitterFeed, grammy2)
-threeGramsNewsFeed <- lapply(twitterFeed, grammy3)
+twoGramsTwitterFeed <- lapply(twitterFeed, grammy2)
+threeGramsTwitterFeed <- lapply(twitterFeed, grammy3)
 
 
 
