@@ -61,11 +61,11 @@ barkellr20180210ngramgen <- function(n, words, r) {
   return (r)
 }
 splity <- function(x) { 
-  strsplit(paste0(x, " "), " +") 
+  strsplit(paste0(x, " "), "[^a-zA-Z]+") 
 }
 
 grammy <- function (n, x, r) { 
-  s <- splity(x)[[1]]
+  s <- splity(tolower(x))[[1]]
   barkellr20180210ngramgen(n, s, r)
 }
 
