@@ -34,8 +34,7 @@ enUsNewsPath <- "final/en_US/en_US.news.txt"
 
 
 
-barkellr20180210ngramgen <- function(n, words) {
-  r <- list()
+barkellr20180210ngramgen <- function(n, words, r) {
   wordLen <- length(words)
   for(i in 1:wordLen) {
     cr <- ""
@@ -89,13 +88,13 @@ blogFeed <- linesOfFile(enUsBlogsPath)
 twitterFeed <- linesOfFile(enUsTwitterPath)
 newsFeed <- linesOfFile(enUsNewsPath)
 
-
-twoGramsBlogFeed <- lapply(blogFeed, grammy2)
-threeGramsBlogFeed <- lapply(blogFeed, grammy3)
-twoGramNewsFeed <- lapply(newsFeed, grammy2)
-threeGramNewsFeed <- lapply(newsFeed, grammy3)
-twoGramsTwitterFeed <- lapply(twitterFeed, grammy2)
-threeGramsTwitterFeed <- lapply(twitterFeed, grammy3)
+r <- list()
+r <- lapply(blogFeed, grammy2)
+r <- lapply(blogFeed, grammy3)
+r <- lapply(newsFeed, grammy2)
+r <- lapply(newsFeed, grammy3)
+r <- lapply(twitterFeed, grammy2)
+r <- lapply(twitterFeed, grammy3)
 
 
 
