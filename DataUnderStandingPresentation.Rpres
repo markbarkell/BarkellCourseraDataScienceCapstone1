@@ -64,17 +64,17 @@ splity <- function(x) {
   strsplit(paste0(x, " "), " +") 
 }
 
-grammy <- function (n, x) { 
+grammy <- function (n, x, r) { 
   s <- splity(x)[[1]]
-  barkellr20180210ngramgen(n, s)
+  barkellr20180210ngramgen(n, s, r)
 }
 
-grammy2 <- function(x) {
-  grammy(2, x)
+grammy2 <- function(x, r) {
+  grammy(2, x, r)
 }
 
-grammy3 <- function(x) {
-  grammy(3, x)
+grammy3 <- function(x, r) {
+  grammy(3, x, r)
 }
 
 linesOfFile <- function(filename) {
@@ -89,12 +89,9 @@ twitterFeed <- linesOfFile(enUsTwitterPath)
 newsFeed <- linesOfFile(enUsNewsPath)
 
 r <- list()
-r <- lapply(blogFeed, grammy2)
-r <- lapply(blogFeed, grammy3)
-r <- lapply(newsFeed, grammy2)
-r <- lapply(newsFeed, grammy3)
-r <- lapply(twitterFeed, grammy2)
-r <- lapply(twitterFeed, grammy3)
+r <- lapply(blogFeed, function(x) { grammy3(x,r) } )
+r <- lapply(newsFeed, function(x) { grammy3(x,r) } )
+r <- lapply(twitterFeed, function(x) { grammy3(x,r) } )
 
 
 
