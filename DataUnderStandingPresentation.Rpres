@@ -88,10 +88,78 @@ blogFeed <- linesOfFile(enUsBlogsPath)
 twitterFeed <- linesOfFile(enUsTwitterPath)
 newsFeed <- linesOfFile(enUsNewsPath)
 
+hashOfString <- function(s) {
+  chars <- strsplit(s, "")[[1]]
+  sm <- sum(sapply(chars, function(x) {
+    encoding <- c('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p',
+                  'q','r','s','t','u','v','w','x','y','z', ' ')
+    
+    v <- which(encoding == x)
+    return (v)
+  })) %% 256
+  return (sm)
+}
+
+getWordingListBaseDirectoryByHash <- function(h) {
+  directoryFirstWord <-  paste0("ngrams/", as.hexmode(h))
+  return (directoryFirstWord)
+}
+
+
+getWordingListBaseDirectory <- function(wordingList) {
+  firstWord <- splity(wordingList)[1]
+  hf <- hashOfString(firstWord)
+  return (getWordingListBaseDirectoryByHash(hf))
+}
+
+mkWordingListDirectory <- function(h) {
+  directoryFirstWord <- getWordingListBaseDirectoryByHash(h)
+  dir.create(paste0(directoryFirstWord, "/1"))
+  dir.create(paste0(directoryFirstWord, "/2"))
+  dir.create(paste0(directoryFirstWord, "/3"))
+}
+
+mkWordingListDirectories <- function() {
+  for(i in 0:255) {
+    mkWordingListDirectory(i)
+  }
+}
+
+mkWordingListDirectories()
+
+wordingListWriter <- function(wordingList, cnt) {
+  fn <- paste0(getWordingListBaseDirectory(wordingList), "/", cnt, "/", hashOfString(wordingList), ".cnt")
+  write(paste0(cnt, wordingList, "\n"), file = fn)
+}
+
+
+writeWordingList <- function(wordingList) {
+  if (grepl("^ *[a-z]+ +[a-z]+ +[a-z]+ *$", wordingList)) {
+    writeWordList(wordingList, 3)
+  } else if (grepl("^ *[a-z]+ +[a-z]+ *$", wordingList)) {
+    writeWordList(wordingList, 2)
+  } else {
+    writeWordList(wordingList, 1)
+  }
+}
+
+doWriting <- function(r) {
+  for(item in r) {
+    writeWordingList(item)
+  }
+}
+
 r <- list()
 r <- lapply(blogFeed, function(x) { grammy3(x,r) } )
+
+r <- list()
+gc()
 r <- lapply(newsFeed, function(x) { grammy3(x,r) } )
+r <- list()
+gc()
 r <- lapply(twitterFeed, function(x) { grammy3(x,r) } )
+r <- list()
+gc()
 
 
 
