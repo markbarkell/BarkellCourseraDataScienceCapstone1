@@ -114,9 +114,9 @@ getWordingListBaseDirectory <- function(wordingList) {
 
 mkWordingListDirectory <- function(h) {
   directoryFirstWord <- getWordingListBaseDirectoryByHash(h)
-  dir.create(paste0(directoryFirstWord, "/1"))
-  dir.create(paste0(directoryFirstWord, "/2"))
-  dir.create(paste0(directoryFirstWord, "/3"))
+  dir.create(paste0(directoryFirstWord, "/1"), recursive =TRUE)
+  dir.create(paste0(directoryFirstWord, "/2"), recursive =TRUE)
+  dir.create(paste0(directoryFirstWord, "/3"), recursive =TRUE)
 }
 
 mkWordingListDirectories <- function() {
@@ -135,11 +135,11 @@ wordingListWriter <- function(wordingList, cnt) {
 
 writeWordingList <- function(wordingList) {
   if (grepl("^ *[a-z]+ +[a-z]+ +[a-z]+ *$", wordingList)) {
-    writeWordList(wordingList, 3)
+    wordingListWriter(wordingList, 3)
   } else if (grepl("^ *[a-z]+ +[a-z]+ *$", wordingList)) {
-    writeWordList(wordingList, 2)
+    wordingListWriter(wordingList, 2)
   } else {
-    writeWordList(wordingList, 1)
+    wordingListWriter(wordingList, 1)
   }
 }
 
@@ -151,13 +151,15 @@ doWriting <- function(r) {
 
 r <- list()
 r <- lapply(blogFeed, function(x) { grammy3(x,r) } )
-
+doWriting(r)
 r <- list()
 gc()
 r <- lapply(newsFeed, function(x) { grammy3(x,r) } )
+doWriting(r)
 r <- list()
 gc()
 r <- lapply(twitterFeed, function(x) { grammy3(x,r) } )
+doWriting(r)
 r <- list()
 gc()
 
