@@ -100,36 +100,10 @@ hashOfString <- function(s) {
   return (sm)
 }
 
-getWordingListBaseDirectoryByHash <- function(h) {
-  directoryFirstWord <-  paste0("ngrams/", as.hexmode(h))
-  return (directoryFirstWord)
-}
 
-
-getWordingListBaseDirectory <- function(wordingList) {
-  firstWord <- splity(wordingList)[1]
-  hf <- hashOfString(firstWord)
-  return (getWordingListBaseDirectoryByHash(hf))
-}
-
-mkWordingListDirectory <- function(h) {
-  directoryFirstWord <- getWordingListBaseDirectoryByHash(h)
-  dir.create(paste0(directoryFirstWord, "/1"), recursive =TRUE)
-  dir.create(paste0(directoryFirstWord, "/2"), recursive =TRUE)
-  dir.create(paste0(directoryFirstWord, "/3"), recursive =TRUE)
-}
-
-mkWordingListDirectories <- function() {
-  for(i in 0:255) {
-    mkWordingListDirectory(i)
-  }
-}
-
-mkWordingListDirectories()
-
+storage <- c()
 wordingListWriter <- function(wordingList, cnt) {
-  fn <- paste0(getWordingListBaseDirectory(wordingList), "/", cnt, "/", hashOfString(wordingList), ".cnt")
-  write(paste0(cnt, wordingList, "\n"), file = fn)
+  
 }
 
 
@@ -151,8 +125,6 @@ doWriting <- function(r) {
 
 r <- list()
 r <- lapply(blogFeed, function(x) { grammy3(x,r) } )
-doWriting(r)
-r <- list()
 gc()
 r <- lapply(newsFeed, function(x) { grammy3(x,r) } )
 doWriting(r)
