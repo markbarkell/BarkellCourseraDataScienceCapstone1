@@ -12,7 +12,7 @@ twitterPathRel <- paste0(directoryPathRel, "en_US.twitter.txt")
 ngrammer <- function(line, ngramcount) {
   pattern <- paste0("([^ ]+ ){", ngramcount, ",}")
   if (grepl(pattern, line)) {
-    ng <- ngram(pp, n = ngramcount)
+    ng <- ngram(line, n = ngramcount)
     return (ng)
   }
   return (NULL)
@@ -27,25 +27,28 @@ phraser <- function(ng) {
   return (NULL)
 }
 
-lastWordWithFreq <- function(phraserList) {
-  if (!is.null(phraserList)) {
-  return (sapply(phraserList, function(p) {
-    key <- sub("( [^ ]+)$", "", p$ngram)
-    word <- sub("^(.*)([^ ]+)$", "$2", p$ngram)
-    return (list(key = key, word = word, freq = p$freq, hash = sapply(word, hash())))
-  }))
+lastWordWithFreq <- function(ng) {
+  if (!is.null(ng)) {
+    
+    p <- get.phrasetable(ng)
+    key <- sub("^(.+)(\\s+.*)$", "\\1", p$ngram, perl = TRUE)
+    word <- sub("^(.*)\\s([^\\s]+)\\s*$", "\\2", p$ngram, perl = TRUE)
+    return (list(key = key, word = word, freq = p$freq ))
+
   }
-  return (hash())
+  return (list())
 }
 
 splittaker <- function(paths, ngramcount) {
   
   h <- hash()
   
-  for(line in simplify2array(paths, function(p) { readLines(p)})) {
-  
-      pp <- preprocess(line, case="upper", remove.punct=TRUE)
-      pp <- gsub("[^A-Z ]", "", pp)
+  for(lines in sapply(paths, function(p) { readLines(p)})) {
+    for(line in lines) {
+    
+      pp <- gsub("[^A-Z\\s]", "", line, ignore.case = TRUE, perl = TRUE)
+      pp <- preprocess(pp, case="upper", remove.punct=TRUE)
+      
       n3 <- ngrammer(pp, 3)
       n2 <- ngrammer(pp, 2)
       n1 <- ngrammer(pp, 1)
@@ -53,13 +56,13 @@ splittaker <- function(paths, ngramcount) {
       p2 <- phraser(n2)
       p3 <- phraser(n3)
       
-      lf1 <- lastWordWithFreq(p1)
-      lf2 <- lastWordWithFreq(p2)
-      lf3 <- lastWordWithFreq(p3)
+      lf1 <- lastWordWithFreq(n1)
+      lf2 <- lastWordWithFreq(n2)
+      lf3 <- lastWordWithFreq(n3)
       
-      h1 <- hash(keys = lf1$key, values = p$hash)
-      h2 <- hash(keys = lf2$key, values = list(word = lf2$word, freq = p$freq, hash = p$hash))
-      h3 <- hash(keys = lf3$key, values = list(word = lf3$word, freq = p$freq, hash = p$hash ))
+      h1 <- hash(keys = lf1$key, values = p1$hash)
+      h2 <- hash(keys = lf2$key, values = list(word = lf2$word, freq = p2$freq, hash = p2$hash))
+      h3 <- hash(keys = lf3$key, values = list(word = lf3$word, freq = p3$freq, hash = p3$hash ))
       for(h1Key in keys(h2)) {
         maxFreqOfNextWordH2 <- max(h2[h1Key]$freq)
         h1[h1Key]$value <- sapply(1:maxFreqOfNextWordH2, function(index) hash())
@@ -77,6 +80,7 @@ splittaker <- function(paths, ngramcount) {
         h[h1Key] <- h1
       }
       
+    }
   }
   return (h)
 }
@@ -84,6 +88,6 @@ splittaker <- function(paths, ngramcount) {
 
 
 
-themodel <- splittaker(c(blogPathRel, newsPathRel, twitterPathRel), 2)
+#themodel <- splittaker(c(blogPathRel, newsPathRel, twitterPathRel), 2)
 
 
