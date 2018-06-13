@@ -29,6 +29,9 @@ enUsTwitterPath <- "final/en_US/en_US.twitter.txt"
 enUsNewsPath <- "final/en_US/en_US.news.txt"
 
 splitter <- function(txt, n) {
+  if (is.null(txt) || txt == "") {
+    txt = "!"
+  }
   ng <- ngram(txt, n)
   pt <- get.phrasetable(ng)
   sp <- "^(.+)\\s+([^\\s]+)\\s*$"
@@ -38,6 +41,7 @@ splitter <- function(txt, n) {
   k <- gsub(ts, "", k, perl = TRUE)
   vl <- sub(ts, "", vl, perl = TRUE)
   v <- mapply(function(x, y) { hash(keys = c(x), values = c(y))}, vl, pt$freq)
+  k[which(k  == "")] = "!"
   h <- hash(keys = k, values = v)
   return (h)
 }
@@ -51,8 +55,12 @@ buildmapping <- function() {
   for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
     for(line in readLines(filename)) {
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
+      preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
+      preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
+      preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
+      #print(preparedLine)
       h <- splitter(preparedLine, 1)
-      for(k in h$keys) {
+      for(k in keys(h)) {
         if (is.null(r[[k]])) {
           r[[k]] <- h[[k]]
         }
