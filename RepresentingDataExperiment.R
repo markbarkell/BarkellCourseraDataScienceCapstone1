@@ -37,8 +37,34 @@ splitter <- function(txt, n) {
   vl <- sub(sp, "\\2", pt$ngram, perl = TRUE)
   k <- gsub(ts, "", k, perl = TRUE)
   vl <- sub(ts, "", vl, perl = TRUE)
-  v <- cbind(vl, pt$freq)
+  v <- mapply(function(x, y) { hash(keys = c(x), values = c(y))}, vl, pt$freq)
   h <- hash(keys = k, values = v)
   return (h)
+}
+
+markovMerge <- function(rvalue, hvalue) {
+  return (rvalue)
+}
+
+buildmapping <- function() {
+  r <- hash()
+  for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
+    for(line in readLines(filename)) {
+      preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
+      h <- splitter(preparedLine, 1)
+      for(k in h$keys) {
+        if (is.null(r[[k]])) {
+          r[[k]] <- h[[k]]
+        }
+        else
+        {
+          r[[k]] <- markovMerge(r[[k]], h[[k]])
+        }
+      }
+      clear(h)
+      rm(h)
+    }  
+  }
+  return (r)
 }
 
