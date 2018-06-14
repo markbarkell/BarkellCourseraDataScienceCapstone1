@@ -28,9 +28,24 @@ if (!file.exists(enUsBlogsPath)) {
 enUsTwitterPath <- "final/en_US/en_US.twitter.txt"
 enUsNewsPath <- "final/en_US/en_US.news.txt"
 
+wordSufficientCountPattern <- function(n) {
+  pattern <- paste0("([^\\s]+\\s){", n-1, ",}")
+  return (pattern)
+}
+
+wordSufficientCountCheck <- function(txt, n) {
+  b <- grepl(wordSufficientCountPattern(n), txt, perl = TRUE)
+  return (b)
+}
+
 splitter <- function(txt, n) {
   if (is.null(txt) || txt == "") {
     txt = "!"
+  }
+  wordSufCntPtr <- wordSufficientCountPattern(n)
+  if (!wordSufficientCountCheck(txt, n)) {
+    txt = ""
+    for(i in 1:n) { txt = paste(txt, "!") }
   }
   ng <- ngram(txt, n)
   pt <- get.phrasetable(ng)
@@ -53,13 +68,24 @@ markovMerge <- function(rvalue, hvalue) {
 buildmapping <- function() {
   r <- hash()
   for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
+    print(paste("filename is", filename))
+    linei <- 0
     for(line in readLines(filename)) {
+      linei <- linei + 1
+      if (linei %% 1000 == 0) {
+        print(paste("processing line", linei))
+        break
+      }
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
+      
+      
+      preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
+      preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
       #print(preparedLine)
-      h <- splitter(preparedLine, 1)
+      h <- splitter(preparedLine, 2)
       for(k in keys(h)) {
         if (is.null(r[[k]])) {
           r[[k]] <- h[[k]]
@@ -69,8 +95,16 @@ buildmapping <- function() {
           r[[k]] <- markovMerge(r[[k]], h[[k]])
         }
       }
-      clear(h)
-      rm(h)
+      h <- splitter(preparedLine, 3)
+      for(k in keys(h)) {
+        if (is.null(r[[k]])) {
+          r[[k]] <- h[[k]]
+        }
+        else
+        {
+          r[[k]] <- markovMerge(r[[k]], h[[k]])
+        }
+      }
     }  
   }
   return (r)
