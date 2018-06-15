@@ -12,9 +12,10 @@
 # The page of that sentence on the course site is:
 # https://www.coursera.org/learn/data-science-project/supplement/4phKX/about-the-copora
 
+library(parallel)
 library(ngram)
 library(hash)
-library(parallel)
+
 
 urlOfCapstoneSeedData <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
 fileNameOfCapstoneSeedData <- "Coursera-SwiftKey.zip"
@@ -80,7 +81,7 @@ markovMerge <- function(rvalue, hvalues) {
 
 
 
-buildmappingForFile <- function(fileName) {
+buildmappingForFile <- function(filename) {
     r <- hash()
     print(paste("filename is", filename))
     linei <- 0
@@ -135,9 +136,9 @@ core_count <- detectCores()
 cores_to_use <- (core_count / 2) - 1
 cores_to_use <- if (cores_to_use < 1) { 1 } else { cores_to_use }
 # Initialize R with the number of Cores to Use
-cl <- makeCluster(cores_to_use)
+cl <- makeCluster(cores_to_use, type = "FORK")
 
-print(paste("About to throw cores at the problem ", core_count))
+print(paste("About to throw cores at the problem ", cores_to_use))
 
 perFileRepresentation <- parLapply(cl, c(enUsNewsPath, enUsBlogsPath, enUsTwitterPath), buildmappingForFile)
 
