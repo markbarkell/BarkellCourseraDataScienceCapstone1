@@ -137,6 +137,8 @@ cores_to_use <- if (cores_to_use < 1) { 1 } else { cores_to_use }
 # Initialize R with the number of Cores to Use
 cl <- makeCluster(cores_to_use)
 
+print(paste("About to throw cores at the problem ", core_count))
+
 perFileRepresentation <- parLapply(cl, c(enUsNewsPath, enUsBlogsPath, enUsTwitterPath))
 
 # Clean up resources.
