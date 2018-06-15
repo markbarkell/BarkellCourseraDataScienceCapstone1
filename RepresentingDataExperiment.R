@@ -139,7 +139,7 @@ cl <- makeCluster(cores_to_use)
 
 print(paste("About to throw cores at the problem ", core_count))
 
-perFileRepresentation <- parLapply(cl, c(enUsNewsPath, enUsBlogsPath, enUsTwitterPath))
+perFileRepresentation <- parLapply(cl, c(enUsNewsPath, enUsBlogsPath, enUsTwitterPath), buildmappingForFile)
 
 # Clean up resources.
 stopCluster(cl)
