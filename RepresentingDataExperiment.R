@@ -124,3 +124,5 @@ buildmapping <- function() {
   return (r)
 }
 
+representation <- buildmapping()
+#save(representation, file = "image.cnt")
