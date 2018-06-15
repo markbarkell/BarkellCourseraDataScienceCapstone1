@@ -69,10 +69,21 @@ markovMerge <- function(rvalue, hvalues) {
       hv <- hvalue[[k]]
       rv <- rvalue[[k]] 
       if (!is.null(rv)) {
-        rvalue[[k]] <- rv + hv
+        #print(paste("hv is ", hv))
+        if (class(hv) == "integer") {
+          rvalue[[k]] <- rv + hv
+        }
+        else {
+          print(paste("oddly hv class is ", class(hv),k,hv))
+        }
       }
       else {
-        rvalue[[k]] <- hv
+        if (class(hv) == "integer") {
+          rvalue[[k]] <- hv
+        }
+        else {
+          print(paste("somewhat oddly hv class is ", class(hv), k, hv))
+        }
       }
     }
   }
@@ -88,7 +99,7 @@ buildmapping <- function() {
       linei <- linei + 1
       if (linei %% 1000 == 0) {
         print(paste("processing line", linei))
-        break
+        
       }
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
       
