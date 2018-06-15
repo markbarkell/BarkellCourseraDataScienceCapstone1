@@ -74,8 +74,8 @@ markovMerge <- function(rvalue, hvalues) {
           rvalue[[k]] <- rv + hv
         }
         else {
-          print(paste("oddly hv class is ", class(hv),k,hv))
-          print(paste("oddly rv class is ", class(rv),k,rv))
+          print(paste("oddly hv class is ", class(hv),k))
+          print(paste("oddly rv class is ", class(rv),k))
         }
       }
       else {
@@ -83,7 +83,7 @@ markovMerge <- function(rvalue, hvalues) {
           rvalue[[k]] <- hv
         }
         else {
-          print(paste("somewhat oddly hv class is ", class(hv), k, hv))
+          print(paste("somewhat oddly hv class is ", class(hv), k))
         }
       }
     }
@@ -100,13 +100,13 @@ buildmapping <- function() {
       linei <- linei + 1
       if (linei %% 1000 == 0) {
         print(paste("processing line", linei))
-        
+        #break
       }
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
       
       
       preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
-      preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
+      #preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
@@ -114,7 +114,7 @@ buildmapping <- function() {
       h <- splitter(preparedLine, 2)
       for(k in keys(h)) {
         if (is.null(r[[k]])) {
-          r[[k]] <- h[[k]]
+          r[[k]] <- markovMerge(hash(), h[[k]])
         }
         else
         {
@@ -124,7 +124,7 @@ buildmapping <- function() {
       h <- splitter(preparedLine, 3)
       for(k in keys(h)) {
         if (is.null(r[[k]])) {
-          r[[k]] <- h[[k]]
+          r[[k]] <- markovMerge(hash(), h[[k]])
         }
         else
         {
@@ -137,4 +137,4 @@ buildmapping <- function() {
 }
 
 representation <- buildmapping()
-#save(representation, file = "image.cnt")
+save(representation, file = "image.cnt")
