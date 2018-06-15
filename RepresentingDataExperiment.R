@@ -61,7 +61,21 @@ splitter <- function(txt, n) {
   return (h)
 }
 
-markovMerge <- function(rvalue, hvalue) {
+markovMerge <- function(rvalue, hvalues) {
+  #print(paste("hvalue is of ", class(hvalues)))
+  for(hvalue in sapply(c(hvalues), function(x) { x })) { 
+    for(k in keys(hvalue)) {
+      #print(paste("key is", k))
+      hv <- hvalue[[k]]
+      rv <- rvalue[[k]] 
+      if (!is.null(rv)) {
+        rvalue[[k]] <- rv + hv
+      }
+      else {
+        rvalue[[k]] <- hv
+      }
+    }
+  }
   return (rvalue)
 }
 
