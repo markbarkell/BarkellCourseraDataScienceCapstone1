@@ -70,11 +70,12 @@ markovMerge <- function(rvalue, hvalues) {
       rv <- rvalue[[k]] 
       if (!is.null(rv)) {
         #print(paste("hv is ", hv))
-        if (class(hv) == "integer") {
+        if (class(hv) == "integer" && class(rv) == "integer") {
           rvalue[[k]] <- rv + hv
         }
         else {
           print(paste("oddly hv class is ", class(hv),k,hv))
+          print(paste("oddly rv class is ", class(rv),k,rv))
         }
       }
       else {
