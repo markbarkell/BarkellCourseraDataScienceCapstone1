@@ -14,6 +14,7 @@
 
 library(ngram)
 library(hash)
+library(parallel)
 
 urlOfCapstoneSeedData <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
 fileNameOfCapstoneSeedData <- "Coursera-SwiftKey.zip"
@@ -62,38 +63,25 @@ splitter <- function(txt, n) {
 }
 
 markovMerge <- function(rvalue, hvalues) {
-  #print(paste("hvalue is of ", class(hvalues)))
   for(hvalue in sapply(c(hvalues), function(x) { x })) { 
     for(k in keys(hvalue)) {
-      #print(paste("key is", k))
       hv <- hvalue[[k]]
       rv <- rvalue[[k]] 
       if (!is.null(rv)) {
-        #print(paste("hv is ", hv))
-        if (class(hv) == "integer" && class(rv) == "integer") {
-          rvalue[[k]] <- rv + hv
-        }
-        else {
-          print(paste("oddly hv class is ", class(hv),k))
-          print(paste("oddly rv class is ", class(rv),k))
-        }
+        rvalue[[k]] <- rv + hv
       }
       else {
-        if (class(hv) == "integer") {
-          rvalue[[k]] <- hv
-        }
-        else {
-          print(paste("somewhat oddly hv class is ", class(hv), k))
-        }
+        rvalue[[k]] <- hv
       }
     }
   }
   return (rvalue)
 }
 
-buildmapping <- function() {
-  r <- hash()
-  for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
+
+
+buildmappingForFile <- function(fileName) {
+    r <- hash()
     print(paste("filename is", filename))
     linei <- 0
     for(line in readLines(filename)) {
@@ -103,8 +91,6 @@ buildmapping <- function() {
         #break
       }
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
-      
-      
       preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
       #preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
@@ -132,9 +118,28 @@ buildmapping <- function() {
         }
       }
     }  
-  }
+  
   return (r)
 }
 
-representation <- buildmapping()
-save(representation, file = "image.cnt")
+# A reference for the multithreading of standard R
+# https://www.r-bloggers.com/how-to-go-parallel-in-r-basics-tips/
+core_count <- dectectCores()
+# Divide by Two because of hyperthreading
+# Subtract one to give some wiggle room
+# to the responsiveness of the computer.
+# Of course, if dealing with a computer that
+# does not do hyperthreading or whatever other
+# industry term might be out there for pipelining
+# the division by 2 may be overkill.
+cores_to_use <- (core_count / 2) - 1
+cores_to_use <- if (cores_to_use < 1) { 1 } else { cores_to_use }
+# Initialize R with the number of Cores to Use
+cl <- makeCluster(cores_to_use)
+
+perFileRepresentation <- parLapply(cl, c(enUsNewsPath, enUsBlogsPath, enUsTwitterPath))
+
+# Clean up resources.
+stopCluster(cl)
+
+save(perFileRepresentation, file = "perFileImage.cnt")
