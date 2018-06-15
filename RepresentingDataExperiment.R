@@ -124,7 +124,7 @@ buildmappingForFile <- function(fileName) {
 
 # A reference for the multithreading of standard R
 # https://www.r-bloggers.com/how-to-go-parallel-in-r-basics-tips/
-core_count <- dectectCores()
+core_count <- detectCores()
 # Divide by Two because of hyperthreading
 # Subtract one to give some wiggle room
 # to the responsiveness of the computer.
