@@ -38,7 +38,7 @@ wordSufficientCountCheck <- function(txt, n) {
   return (b)
 }
 
-splitter <- function(txt, n) {
+phraser <- function(txt, n) {
   if (is.null(txt) || txt == "") {
     txt = "!"
   }
@@ -49,59 +49,27 @@ splitter <- function(txt, n) {
   }
   ng <- ngram(txt, n)
   pt <- get.phrasetable(ng)
-  sp <- "^(.+)\\s+([^\\s]+)\\s*$"
-  ts <- "\\s+$";
-  k <- sub(sp, "\\1", pt$ngram, perl = TRUE)
-  vl <- sub(sp, "\\2", pt$ngram, perl = TRUE)
-  k <- gsub(ts, "", k, perl = TRUE)
-  vl <- sub(ts, "", vl, perl = TRUE)
-  v <- mapply(function(x, y) { hash(keys = c(x), values = c(y))}, vl, pt$freq)
-  k[which(k  == "")] = "!"
-  h <- hash(keys = k, values = v)
-  return (h)
+  return (names(sapply(mapply(function(x, y) { sapply(1:y, function(z) x) }, pt$ngrams, pt$freq), function(k) k)))
+  
 }
 
-markovMerge <- function(rvalue, hvalues) {
-  #print(paste("hvalue is of ", class(hvalues)))
-  for(hvalue in sapply(c(hvalues), function(x) { x })) { 
-    for(k in keys(hvalue)) {
-      #print(paste("key is", k))
-      hv <- hvalue[[k]]
-      rv <- rvalue[[k]] 
-      if (!is.null(rv)) {
-        #print(paste("hv is ", hv))
-        if (class(hv) == "integer" && class(rv) == "integer") {
-          rvalue[[k]] <- rv + hv
-        }
-        else {
-          print(paste("oddly hv class is ", class(hv),k))
-          print(paste("oddly rv class is ", class(rv),k))
-        }
-      }
-      else {
-        if (class(hv) == "integer") {
-          rvalue[[k]] <- hv
-        }
-        else {
-          print(paste("somewhat oddly hv class is ", class(hv), k))
-        }
-      }
-    }
-  }
-  return (rvalue)
-}
 
 buildmapping <- function() {
-  r <- hash()
   for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
+    file2name <- paste0(filename, ".bi.raw")
+    fileDes2 <- file(description = file2name, open = "w+")
+    file3name <- paste0(filename, ".tri.raw")
+    fileDes3 <- file(description = file3name, open = "w+")
     print(paste("filename is", filename))
     linei <- 0
     for(line in readLines(filename)) {
       linei <- linei + 1
       if (linei %% 1000 == 0) {
         print(paste("processing line", linei))
-        #break
       }
+      #if (linei %% 10000 == 0) {
+      #  break
+      #}
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
       
       
@@ -111,30 +79,14 @@ buildmapping <- function() {
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
       #print(preparedLine)
-      h <- splitter(preparedLine, 2)
-      for(k in keys(h)) {
-        if (is.null(r[[k]])) {
-          r[[k]] <- markovMerge(hash(), h[[k]])
-        }
-        else
-        {
-          r[[k]] <- markovMerge(r[[k]], h[[k]])
-        }
-      }
-      h <- splitter(preparedLine, 3)
-      for(k in keys(h)) {
-        if (is.null(r[[k]])) {
-          r[[k]] <- markovMerge(hash(), h[[k]])
-        }
-        else
-        {
-          r[[k]] <- markovMerge(r[[k]], h[[k]])
-        }
-      }
-    }  
+      p <- phraser(preparedLine, 2)
+      write(p, file = fileDes2)
+      p <- phraser(preparedLine, 3)
+      write(p, file = fileDes3)
+    }
+    close(fileDes2)
+    close(fileDes3)
   }
-  return (r)
 }
 
-representation <- buildmapping()
-save(representation, file = "image.cnt")
+buildmapping()
