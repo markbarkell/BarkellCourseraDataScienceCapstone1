@@ -89,4 +89,24 @@ buildmapping <- function() {
   }
 }
 
-buildmapping()
+#buildmapping()
+
+sort_bi_command <- function(srcFilename) {
+  biCommand <- paste("cat", paste0(srcFilename, ".bi.raw"), "| grep -v ! | sort >", paste0(srcFilename, ".bi.srt"))
+  return (biCommand)
+}
+
+sort_tri_command <- function(srcFilename) {
+  triCommand <- paste("cat", paste0(srcFilename, ".tri.raw"), "| grep -v ! | sort >", paste0(srcFilename, ".tri.srt"))
+                      return (triCommand)
+}
+
+alphabetize_raw <- function() {
+  for(srcFilename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
+    biCommand <- sort_bi_command(srcFilename);
+    print(biCommand)
+    system(biCommand)
+    triCommand <- sort_tri_command(srcFilename)
+    system(triCommand)
+  }
+}
