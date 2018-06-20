@@ -89,7 +89,6 @@ buildmapping <- function() {
   }
 }
 
-#buildmapping()
 
 sort_bi_command <- function(srcFilename) {
   biCommand <- paste("cat", paste0(srcFilename, ".bi.raw"), "| grep -v ! | sort >", paste0(srcFilename, ".bi.srt"))
@@ -110,3 +109,22 @@ alphabetize_raw <- function() {
     system(triCommand)
   }
 }
+
+alphabetize_raw_fn_bi <- function(srcFilename) {
+  biCommand <- sort_bi_command(srcFilename);
+  print(biCommand)
+  system(biCommand)
+}
+
+alphabetize_raw_fn_tri <- function(srcFilename) {
+  triCommand <- sort_tri_command(srcFilename);
+  print(triCommand)
+  system(triCommand)
+}
+
+
+
+#buildmapping()
+#alphabetize_raw()
+# Just called the manual sorting for the Twitter textual data.
+# cause it wasn't otherwise getting written to disk.
