@@ -137,20 +137,25 @@ countsForThe <- countsForWord(r, "the")
 countsForA <- countsForWord(r, "a")
 countsForDog <- countsForWord(r, "dog")
 ```
+
 ## Dogs
+Dog Words
 ```{r, echo=FALSE}
 hist(countsForDog, main = "Histogram of word occurrences same word after 'dog'.")
 ```
+
 ## The
+The Words
 ```{r, echo=FALSE}
 hist(countsForThe, main = "Histogram of word occurrences same word after 'the'.")
 ```
+
 ## A
+A Words
 ```{r, echo=FALSE}
 hist(countsForA, main = "Histogram of word occurrences same word after 'a'.")
 ```
 
-```
 
 By using these occurrences will be able to suggest the next word to users when they've but typed a few characters.
 
