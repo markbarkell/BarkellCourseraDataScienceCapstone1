@@ -12,8 +12,10 @@
 # The page of that sentence on the course site is:
 # https://www.coursera.org/learn/data-science-project/supplement/4phKX/about-the-copora
 
+library(parallel)
 library(ngram)
 library(hash)
+
 
 urlOfCapstoneSeedData <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
 fileNameOfCapstoneSeedData <- "Coursera-SwiftKey.zip"
@@ -54,6 +56,7 @@ phraser <- function(txt, n) {
 }
 
 
+
 buildmapping <- function() {
   for(filename in c(enUsBlogsPath, enUsNewsPath, enUsTwitterPath)) {
     file2name <- paste0(filename, ".bi.raw")
@@ -71,8 +74,6 @@ buildmapping <- function() {
       #  break
       #}
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
-      
-      
       preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
       #preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)

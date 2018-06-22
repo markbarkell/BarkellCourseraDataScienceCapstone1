@@ -1,0 +1,161 @@
+---
+title: "Predicting The Next word"
+author: "Mark Barkell"
+date: "June 17, 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## The Last Word
+
+We all want the last word in a conversation, but with everyone's typing skills being chanllenged by the use of so-called Smart Phones, our Phones need to be ever smarter so that we can pick the next word before the person we are conversing with might select hers.
+
+So, by looking at the words or perhaps letters entered into the keypad previously the next word may be selectable as a high chance of what the person really desires.
+
+## We have data
+
+To make a prediction, we can use many types of models, but models don't matter if we are agnositic. So, as part of this project we have a corpus of texts where each line is a Twitter entry, Blog post, or a New Article.
+
+The plan is to use the ngram package to create a sorted list of tri and bi grams with numbers indicating their occurrences in the three corpuses.
+
+The Coursea Data Science Capstone has given the location of the texts at:
+- https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip
+
+## Possible Techinques
+
+Tri-gram -- means three words in series.  If we had two words, we'd use the two words to suggest what the user wants as a third.
+Bi-gram -- means having two words in series.  If we had one word, we'd use that word to predict what the user wants as a second.
+
+- Keeping a Hash table of the first word followed by the last word for bi-grams
+- Keeping a Hash table of the first and second word followed by the last word for tri-grams
+
+- Keeping a sorted list of bigrams and trigrams by their occurrence count.
+- Keeping a Postgresql database of trigrams and bigrams.
+- Keeping a Redis cache with backing store of trigrams and bigrams.
+
+Other techiques that might be used to help suggestive texts:
+
+- Keeping frequence counts of words that follow any given word in a sentence.  For example, "You must take the good with the bad." has good outside of the tri-gram of "with the bad", but is highly predictive.  Of course, quadgrams would be potentially better, but there is a computation cost.
+- General frequency counting to say that certain words are more likely to occur with others in a sentence.
+- Removing one letter words from the corpus -- in English only "I" and "A".  These words are almost useless to suggest, but may have suggestive value.
+- Preprocessing to remove all non-A-Z.  Foreign Language prediction is outside of scope.
+
+## Bigram displays in the first 10,000 records of the
+
+The following histograms show how often the same word occurs after the word "a", "the", or  "dog", in just the first 10,000 lines of text, excluding words occurring only once in said context.   Cats were not so popular in these texts, so dog lovers won:
+
+```{r, echo=FALSE}
+library(ngram)
+library(hash)
+
+wordSufficientCountPattern <- function(n) {
+  pattern <- paste0("([^\\s]+\\s){", n-1, ",}")
+  return (pattern)
+}
+
+wordSufficientCountCheck <- function(txt, n) {
+  b <- grepl(wordSufficientCountPattern(n), txt, perl = TRUE)
+  return (b)
+}
+
+splitter <- function(txt, n) {
+  if (is.null(txt) || txt == "") {
+    txt = "!"
+  }
+  wordSufCntPtr <- wordSufficientCountPattern(n)
+  if (!wordSufficientCountCheck(txt, n)) {
+    txt = ""
+    for(i in 1:n) { txt = paste(txt, "!") }
+  }
+  ng <- ngram(txt, n)
+  pt <- get.phrasetable(ng)
+  sp <- "^(.+)\\s+([^\\s]+)\\s*$"
+  ts <- "\\s+$";
+  k <- sub(sp, "\\1", pt$ngram, perl = TRUE)
+  vl <- sub(sp, "\\2", pt$ngram, perl = TRUE)
+  k <- gsub(ts, "", k, perl = TRUE)
+  vl <- sub(ts, "", vl, perl = TRUE)
+  v <- mapply(function(x, y) { hash(keys = c(x), values = c(y))}, vl, pt$freq)
+  k[which(k  == "")] = "!"
+  h <- hash(keys = k, values = v)
+  return (h)
+}
+
+markovMerge <- function(rvalue, hvalues) {
+  for(hvalue in sapply(c(hvalues), function(x) { x })) { 
+    for(k in keys(hvalue)) {
+      hv <- hvalue[[k]]
+      rv <- rvalue[[k]] 
+      if (!is.null(rv)) {
+        rvalue[[k]] <- rv + hv
+      }
+      else {
+        rvalue[[k]] <- hv
+      }
+    }
+  }
+  return (rvalue)
+}
+
+r <- hash()
+linei <- 0
+enUsBlogsPath <- "final/en_US/en_US.blogs.txt"
+for(line in readLines(enUsBlogsPath)) {
+  linei <- linei + 1
+  if (linei >= 10*1000) {
+    break
+  }
+  preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
+  preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
+  #preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
+  preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
+  preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
+  preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
+  h <- splitter(preparedLine, 2)
+  for(k in keys(h)) {
+    if (is.null(r[[k]])) {
+      r[[k]] <- markovMerge(hash(), h[[k]])
+    }
+    else
+    {
+      r[[k]] <- markovMerge(r[[k]], h[[k]])
+    }
+  }
+}
+
+countsForWord <- function(h, w) {
+  s <- lapply(keys(h[[w]]), function(x) { h[[w]][[x]] })
+  s <- s[which(s > 1)]
+  s <- sapply(s, function(x) x)
+  return (s)
+}
+
+countsForThe <- countsForWord(r, "the")
+countsForA <- countsForWord(r, "a")
+countsForDog <- countsForWord(r, "dog")
+```
+
+## Dogs
+Dog Words
+```{r, echo=FALSE}
+hist(countsForDog, main = "Histogram of word occurrences same word after 'dog'.")
+```
+
+## The
+The Words
+```{r, echo=FALSE}
+hist(countsForThe, main = "Histogram of word occurrences same word after 'the'.")
+```
+
+## A
+A Words
+```{r, echo=FALSE}
+hist(countsForA, main = "Histogram of word occurrences same word after 'a'.")
+```
+
+
+By using these occurrences will be able to suggest the next word to users when they've but typed a few characters.
+
