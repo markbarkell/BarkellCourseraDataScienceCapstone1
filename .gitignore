@@ -2,6 +2,8 @@
 *.cnt
 *.html
 rsconnect/
+a.out
+*~
 
 # Make sure we (funny, I'm the only one writing this and I used the term 'we') don't commit the zip files -- otherwise the git source code control repository may become too large:
 *.zip
