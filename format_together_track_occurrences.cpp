@@ -32,7 +32,7 @@ namespace {
     uint32_t const r = std::min(desiredStringSize, inSize);
     std::string result = in.substr(0*desiredStringSize, r);
     std::ostringstream oss;
-    oss << result << std::string(' ', result.size());
+    oss << result << std::string(result.size(), ' ');
     result = oss.str();
     return result;
   }
@@ -93,8 +93,7 @@ namespace {
 	    minCount = 0;
 	  }
 	  if (cLine == minStr) {
-	    ++minCount;
-	    
+	    ++minCount;	    
 	  }
 	}
       }
@@ -106,11 +105,14 @@ namespace {
   }
 						       
 
-  // void writeStringAndCount(std::pair<std::string, uint16_t> const& cntAndStr,
-  // 			   std::ofstream outStream)
-  // {
-  //   return;
-  // }
+  void writeStringAndCount(std::pair<std::string, uint16_t> const& cntAndStr,
+  			   std::ofstream& outStream)
+  {
+    std::cout << cntAndStr.first << " " << cntAndStr.second << std::endl;
+    outStream << cntAndStr.first;
+    outStream.write(reinterpret_cast<char const*>(&(cntAndStr.second)),
+		    sizeof(cntAndStr.second));
+  }
   
   
   void combineStreams(std::vector<std::istream*>& vis, std::string const& outputName)
@@ -126,9 +128,9 @@ namespace {
       readFiles(vis, lines);
       auto cntAndStr = leastStringAndCount(vis, lines);
       continueReading = cntAndStr.second != 0;
-      //if (continueReading) {
-      //	writeStringAndCount(cntAndStr, outStream);
-      //}
+      if (continueReading) {
+      	writeStringAndCount(cntAndStr, outStream);
+      }
     } while(continueReading);
     
   }
