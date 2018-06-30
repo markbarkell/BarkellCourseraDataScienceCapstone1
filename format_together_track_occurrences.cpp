@@ -39,8 +39,9 @@ namespace {
   
   std::pair<std::string, bool> readLineFromStream(std::istream& iss)
   {
-    std::string line;
-    bool ok = !!(iss >> line);
+    std::string line;    
+    bool ok = !!(std::getline(iss, line));
+    line = formatLine(line);
     return std::make_pair(line, ok);
   }
   
@@ -55,7 +56,7 @@ namespace {
 	iterStream != vis.end() && iterLines != lines.end();
 	++iterStream, ++iterLines) {
       if (iterLines->second) {
-	bool second = !!((**iterStream) >> iterLines->first);
+	bool second = std::getline((**iterStream), iterLines->first).good();
 	auto first = formatLine(iterLines->first);
 	*iterLines = std::make_pair(first, second);
       }
@@ -73,30 +74,44 @@ namespace {
     return c;
   }
 
+
+  std::string leastString(std::vector<std::pair<std::string, bool> > const& lines)
+  {
+    std::string minStr;
+    for(auto iterLines = lines.begin(); iterLines != lines.cend(); ++iterLines) {
+      if (minStr.empty()) {
+	minStr = iterLines->first;
+      }
+      minStr = std::min(minStr, iterLines->first);
+    }
+    return minStr;
+  }
+  
   std::pair<std::string, uint16_t> leastStringAndCount
   (std::vector<std::istream*>& vis,
    std::vector<std::pair<std::string, bool> >& lines)
   {
     std::string minStr;
     uint16_t minCount = 0;
-
+    
     do {
-      for(auto iterLines = lines.cbegin(); iterLines != lines.cend(); ++iterLines) {
-	std::string cLine;
-	if (iterLines->second) {
-	  cLine = (iterLines->first);
-	  if (minStr.empty()) {
-	    minStr = cLine;
-	  }
-	  if (cLine < minStr) {
-	    minStr = cLine;
-	    minCount = 0;
-	  }
-	  if (cLine == minStr) {
-	    ++minCount;	    
+
+      auto minStr = leastString(lines);
+      
+      for(auto iterLines = lines.begin(); iterLines != lines.end(); ++iterLines) {
+	auto cLine = iterLines->first;
+	while (cLine == minStr) {
+	  auto& curStream(*vis[iterLines - lines.cbegin()]);
+	  auto result = readLineFromStream(curStream);
+	  *iterLines = result;
+	  cLine = result.first; 
+	  ++minCount;
+	  if (!result.second) {
+	    break;
 	  }
 	}
       }
+      
       if (minCount != 0) {
 	return std::make_pair(minStr, minCount);
       }
@@ -138,10 +153,10 @@ namespace {
   void combineStreams()
   {
 
-    std::ifstream biBlogStream("./final/en_US/en_US.blog.txt.bi.srt");
+    std::ifstream biBlogStream("./final/en_US/en_US.blogs.txt.bi.srt");
     std::ifstream biTwitStream("./final/en_US/en_US.twitter.txt.bi.srt");
     std::ifstream biNewsStream("./final/en_US/en_US.news.txt.bi.srt");
-    std::ifstream triBlogStream("./final/en_US/en_US.txt.blog.tri.srt");
+    std::ifstream triBlogStream("./final/en_US/en_US.blogs.txt.tri.srt");
     std::ifstream triTwitStream("./final/en_US/en_US.twitter.txt.tri.srt");
     std::ifstream triNewsStream("./final/en_US/en_US.news.txt.tri.srt");
     std::vector<std::istream*> vis;
