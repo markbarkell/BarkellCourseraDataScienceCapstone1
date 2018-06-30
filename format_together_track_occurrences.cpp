@@ -200,9 +200,15 @@ std::vector<StrCnt> readCntFile()
 void predictValues(int argc, const char** argv)
 {
   std::string const ss = buildSearchString(argc, argv);
-
-  auto cntInfo = readCountFile();
- 
+  auto cntInfo = readCntFile();
+  auto iter = std::lower_bound(cntInfo.cbegin(), cntInfo.cend(), ss);
+  if (iter != cntInfo.cend()) {
+    std::cout << "Iter String Value " << iter->valueString() << std::endl;
+    std::cout << "Iter String Count " << iter->associationCount() << std::endl;
+  }
+  else {
+    std::cout << "Nothing to report";
+  }
 }
 
 int main(int argc, const char** argv)
