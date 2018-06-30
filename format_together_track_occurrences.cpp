@@ -20,10 +20,13 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include "./StrCnt.hpp"
 
 namespace {
 
   uint32_t const desiredStringSize = 128 - sizeof(uint16_t);
+  uint32_t const recordSize = 128;
+  const char* cntFileName =  "btn.cnt";
 
   
   std::string formatLine(std::string const& in)
@@ -40,7 +43,7 @@ namespace {
   std::pair<std::string, bool> readLineFromStream(std::istream& iss)
   {
     std::string line;    
-    bool ok = !!(std::getline(iss, line));
+    bool ok = !!(std::getline(iss, line)) && !line.empty();
     line = formatLine(line);
     return std::make_pair(line, ok);
   }
@@ -56,7 +59,7 @@ namespace {
 	iterStream != vis.end() && iterLines != lines.end();
 	++iterStream, ++iterLines) {
       if (iterLines->second) {
-	bool second = std::getline((**iterStream), iterLines->first).good();
+	bool second = std::getline((**iterStream), iterLines->first).eof();
 	auto first = formatLine(iterLines->first);
 	*iterLines = std::make_pair(first, second);
       }
@@ -166,13 +169,55 @@ namespace {
     vis.push_back(&triBlogStream);
     vis.push_back(&triTwitStream);
     vis.push_back(&triNewsStream);
-    combineStreams(vis, "btn.cnt");    
+    combineStreams(vis, cntFileName);    
   }
+}
+
+std::string buildSearchString(int argc, const char** argv)
+{
+  std::ostringstream oss;
+  for(int i = 1; i < argc; ++i) {
+    oss << argv[i] << " ";
+  }
+  return (oss.str());
+}
+
+
+std::vector<StrCnt> readCntFile()
+{
+   std::vector<StrCnt> v;
+   std::ifstream is(cntFileName);
+   char buf[recordSize];
+   while (!is.eof() && is.good()) {
+     is.read(buf, sizeof(buf)/sizeof(*buf));
+     std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
+     uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
+     v.push_back(StrCnt(value, count));
+   }
+   return v;
+}
+
+void predictValues(int argc, const char** argv)
+{
+  std::string const ss = buildSearchString(argc, argv);
+
+  auto cntInfo = readCountFile();
+ 
 }
 
 int main(int argc, const char** argv)
 {
-
-  combineStreams();
+  std::cout << "argc " << argc << std::endl;
+  for(auto i = 0; i < argc; ++i) {
+    std::cout << argv[i] << std::endl;
+  }
+  if (argc == 2 && std::string(argv[1]) == std::string("--generate")) {
+    std::cout << "generating" << std::endl;
+    combineStreams();
+  }
+  else if (argc > 1) {
+    std::cout << "predicting" << std::endl;
+    predictValues(argc, argv);
+  }
   return EXIT_SUCCESS;
 }
