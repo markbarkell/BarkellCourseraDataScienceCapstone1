@@ -38,7 +38,7 @@ namespace {
     uint32_t const r = std::min(desiredStringSize, inSize);
     std::string result = in.substr(0*desiredStringSize, r);
     std::ostringstream oss;
-    oss << result << std::string(result.size(), ' ');
+    oss << result << std::string(desiredStringSize - result.size(), ' ');
     result = oss.str();
     return result;
   }
@@ -207,7 +207,7 @@ void predictValues(int argc, const char** argv)
   auto cntInfo = readCntFile();
   auto iter = cntInfo.lower_bound(ss);
   if (iter != cntInfo.cend()) {
-    std::cout << "Iter String Value " << iter->first << std::endl;
+    std::cout << "Iter String Value '" << iter->first << "'" << std::endl;
     std::cout << "Iter String Count " << iter->second << std::endl;
   }
   else {
