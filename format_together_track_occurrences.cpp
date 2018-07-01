@@ -20,10 +20,13 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
-#include "./StrCnt.hpp"
+#include <map>
+
 
 namespace {
 
+  
+  
   uint32_t const desiredStringSize = 128 - sizeof(uint16_t);
   uint32_t const recordSize = 128;
   const char* cntFileName =  "btn.cnt";
@@ -183,16 +186,17 @@ std::string buildSearchString(int argc, const char** argv)
 }
 
 
-std::vector<StrCnt> readCntFile()
+std::map<std::string, uint16_t> readCntFile()
 {
-   std::vector<StrCnt> v;
+  std::map<std::string, uint16_t> v;
    std::ifstream is(cntFileName);
    char buf[recordSize];
    while (!is.eof() && is.good()) {
      is.read(buf, sizeof(buf)/sizeof(*buf));
      std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
      uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
-     v.push_back(StrCnt(value, count));
+     auto p = std::make_pair(value, count);
+     v.insert(p);
    }
    return v;
 }
@@ -201,10 +205,10 @@ void predictValues(int argc, const char** argv)
 {
   std::string const ss = buildSearchString(argc, argv);
   auto cntInfo = readCntFile();
-  auto iter = std::lower_bound(cntInfo.cbegin(), cntInfo.cend(), ss);
+  auto iter = cntInfo.lower_bound(ss);
   if (iter != cntInfo.cend()) {
-    std::cout << "Iter String Value " << iter->valueString() << std::endl;
-    std::cout << "Iter String Count " << iter->associationCount() << std::endl;
+    std::cout << "Iter String Value " << iter->first << std::endl;
+    std::cout << "Iter String Count " << iter->second << std::endl;
   }
   else {
     std::cout << "Nothing to report";
