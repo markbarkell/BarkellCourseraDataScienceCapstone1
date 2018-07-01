@@ -148,7 +148,7 @@ namespace {
     do {
       readFiles(vis, lines);
       auto cntAndStr = leastStringAndCount(vis, lines);
-      continueReading = cntAndStr.second != 0;
+      continueReading = cntAndStr.second != 0 && !cntAndStr.first.empty();
       if (continueReading) {
       	writeStringAndCount(cntAndStr, outStream);
       }
