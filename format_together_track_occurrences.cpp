@@ -21,6 +21,8 @@
 #include <sstream>
 #include <vector>
 #include <map>
+#include <set>
+#include <string>
 
 
 namespace {
@@ -201,10 +203,34 @@ std::map<std::string, uint16_t> readCntFile()
    return v;
 }
 
-void predictValues(int argc, const char** argv)
+
+std::string getLastWord(std::string const& full)
 {
-  std::string const ss = buildSearchString(argc, argv);
-  auto cntInfo = readCntFile();
+  bool wordBack = false;
+  std::vector<char> v;
+  for(auto citer = full.crbegin(); citer != full.crend(); ++citer) {
+    if (*citer == ' ') {
+      if (wordBack) {
+	break;
+      }
+      continue;
+    } else {
+      wordBack = true;
+    }
+    v.push_back(*citer);
+  }
+  std::string r;
+  for(auto vi = v.crbegin(); vi != v.crend(); ++vi) {
+    r.push_back(*vi);
+  }
+  return r;
+}
+
+void predictFromString(std::string const& ss,
+		       std::map<std::string, uint16_t> const& cntInfo,
+		       std::set<std::string> const* endsWith = nullptr)
+{
+
   auto iter = cntInfo.lower_bound(ss);
   if (iter != cntInfo.cend()) {
     std::cout << "Iter String Value '" << iter->first << "'" << std::endl;
@@ -216,12 +242,31 @@ void predictValues(int argc, const char** argv)
     } while (iter != cntInfo.end() && iter->first.substr(0, ss.size()) == ss);
     for(auto citerMap = cnts.cbegin(); citerMap != cnts.cend(); ++citerMap)
       {
-	std::cout << "occurrences: " << citerMap->first << ":" << std::endl;       	 for(auto iterV = citerMap->second.cbegin();					       iterV != citerMap->second.cend(); ++iterV) { std::cout << (*iterV) << std::endl;	  }
+	bool doneOccurrences = false;
+	for(auto iterV = citerMap->second.cbegin();
+	    iterV != citerMap->second.cend(); ++iterV) {
+	  std::string lastWord = getLastWord((*iterV));
+	  if (!endsWith || endsWith->find(lastWord) != endsWith->cend()) {
+	    if (!doneOccurrences) {
+	      std::cout << "occurrences: " << citerMap->first << ":" << std::endl;
+	    }
+	    doneOccurrences = true;
+	    std::cout << (*iterV) << std::endl;
+	  }
+
+	}
       }
   }
   else {
     std::cout << "Nothing to report";
   }
+}
+
+void predictValues(int argc, const char** argv)
+{
+  std::string const ss = buildSearchString(argc, argv);
+  auto cntInfo = readCntFile();
+  predictFromString(ss, cntInfo);
 }
 
 int main(int argc, const char** argv)
@@ -234,9 +279,34 @@ int main(int argc, const char** argv)
     std::cout << "generating" << std::endl;
     combineStreams();
   }
+  else if (argc == 2 && std::string(argv[1]) == std::string("--endswith")) {    
+    std::cout << "About read model from file" << std::endl;
+    auto model = readCntFile();
+    std::cout << "About to populate the ending filter:  (dash to finish)"
+	      << std::endl;
+    std::set<std::string> endsWith;
+    std::string e;
+    while( (std::cin >> e) && e != "-")      {
+      try { endsWith.insert(e); } catch (std::exception) { }
+    }
+    for(auto iter = endsWith.cbegin(); iter != endsWith.cend(); ++iter) {
+      std::cout << "Possible ending with '" << (*iter) << "'" << std::endl;
+    }
+    std::cout << "first search string:" << std::endl;
+    std::cout.flush();
+    std::string line;
+    std::cin.ignore();
+    while (std::getline(std::cin, line)) {
+      std::cout << "Line start search '" << line << "'" << std::endl;
+      predictFromString(line, model, &endsWith);
+      std::cout << "next search string:" << std::endl;
+      std::cout.flush();
+    }
+  }
   else if (argc > 1) {
     std::cout << "predicting" << std::endl;
     predictValues(argc, argv);
   }
+
   return EXIT_SUCCESS;
 }
