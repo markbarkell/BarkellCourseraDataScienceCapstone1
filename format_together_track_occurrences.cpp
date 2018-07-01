@@ -148,7 +148,7 @@ namespace {
     do {
       readFiles(vis, lines);
       auto cntAndStr = leastStringAndCount(vis, lines);
-      continueReading = cntAndStr.second != 0 && !cntAndStr.first.empty();
+      continueReading = cntAndStr.second != 0 && ' ' != cntAndStr.first[0];
       if (continueReading) {
       	writeStringAndCount(cntAndStr, outStream);
       }
@@ -209,6 +209,15 @@ void predictValues(int argc, const char** argv)
   if (iter != cntInfo.cend()) {
     std::cout << "Iter String Value '" << iter->first << "'" << std::endl;
     std::cout << "Iter String Count " << iter->second << std::endl;
+    std::map<uint16_t, std::vector<std::string> > cnts;
+    do  {
+      cnts[iter->second].push_back(iter->first);
+      ++iter;
+    } while (iter != cntInfo.end() && iter->first.substr(0, ss.size()) == ss);
+    for(auto citerMap = cnts.cbegin(); citerMap != cnts.cend(); ++citerMap)
+      {
+	std::cout << "occurrences: " << citerMap->first << ":" << std::endl;       	 for(auto iterV = citerMap->second.cbegin();					       iterV != citerMap->second.cend(); ++iterV) { std::cout << (*iterV) << std::endl;	  }
+      }
   }
   else {
     std::cout << "Nothing to report";
