@@ -282,26 +282,29 @@ int main(int argc, const char** argv)
   else if (argc == 2 && std::string(argv[1]) == std::string("--endswith")) {    
     std::cout << "About read model from file" << std::endl;
     auto model = readCntFile();
-    std::cout << "About to populate the ending filter:  (dash to finish)"
-	      << std::endl;
-    std::set<std::string> endsWith;
-    std::string e;
-    while( (std::cin >> e) && e != "-")      {
-      try { endsWith.insert(e); } catch (std::exception) { }
-    }
-    for(auto iter = endsWith.cbegin(); iter != endsWith.cend(); ++iter) {
-      std::cout << "Possible ending with '" << (*iter) << "'" << std::endl;
-    }
-    std::cout << "first search string:" << std::endl;
-    std::cout.flush();
-    std::string line;
-    std::cin.ignore();
-    while (std::getline(std::cin, line)) {
+   
+    while (true) {
+      std::cout << "About to populate the ending filter:  (dash to finish)"
+		<< std::endl;
+      std::set<std::string> endsWith;
+      std::string e;
+      while( (std::cin >> e) && e != "-")      {
+	try { endsWith.insert(e); } catch (std::exception) { }
+      }
+      for(auto iter = endsWith.cbegin(); iter != endsWith.cend(); ++iter) {
+	std::cout << "Possible ending with '" << (*iter) << "'" << std::endl;
+      }
+      std::cout << "Search string:" << std::endl;    
+      std::cout.flush();
+      std::string line;
+      std::cin.ignore();
+      std::getline(std::cin, line);
       std::cout << "Line start search '" << line << "'" << std::endl;
       predictFromString(line, model, &endsWith);
-      std::cout << "next search string:" << std::endl;
+    
       std::cout.flush();
     }
+    
   }
   else if (argc > 1) {
     std::cout << "predicting" << std::endl;
