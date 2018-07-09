@@ -74,28 +74,24 @@ buildmapping <- function() {
       }
       preparedLine <- preprocess(line, remove.punct = TRUE, remove.numbers = TRUE)
       preparedLine <- gsub("[^a-z\\s]", "", preparedLine, perl = TRUE)
-      preparedLine <- gsub("\\b(a|the|an)\\b", " ", preparedLine, perl = TRUE)
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
-      preparedLine2 <- gsub("(i|you|we|they|s?he|it) (would|d|a?m|ll|will|have|ve|shall|be|can|is) ", "sptrv ", preparedLine, perl = TRUE)
-      preparedLine2 <- gsub("(i|you|we|they|s?he|it) (wouldn't|would not|a?m|will not|haven't|have not|shall not|cannot|can not|isn't|is not) ", "sptrvn ", preparedLine2, perl = TRUE) 
-      preparedLine3 <- gsub("(\\w+) (would|d|a?m|ll|will|have|ve|shall|be|can|is) ", "gsptrvn ", preparedLine, perl = TRUE)
-      preparedLine3 <- gsub("(\\w+) (wouldn't|would not|a?m|will not|haven't|have not|shall not|cannot|can not|isn't|is not) ", "gsptrvn ", preparedLine3, perl = TRUE) 
-      
+      #preparedLine2 <- gsub("\\b(a|the|an|he|she|it|i|you|they|them|we|us|of us|of them|their|yours?|mine|not|no|yes|without|with|out|in|case|because|therefore|yet)\\b", " ", preparedLine, perl = TRUE)
+      #preparedLine3 <- gsub("\\b(a|the|an|and|or|not)\\b", " ", preparedLine, perl = TRUE)
       #print(preparedLine)
       p <- phraser(preparedLine, 2)
       write(p, file = fileDes2)
-      p <- phraser(preparedLine2, 2)
-      write(p, file = fileDes2)
-      p <- phraser(preparedLine3, 2)
-      write(p, file = fileDes2)
+      #p <- phraser(preparedLine2, 2)
+      #write(p, file = fileDes2)
+      #p <- phraser(preparedLine3, 2)
+      #write(p, file = fileDes2)
       p <- phraser(preparedLine, 3)
       write(p, file = fileDes3)
-      p <- phraser(preparedLine2, 3)
-      write(p, file = fileDes3)
-      p <- phraser(preparedLine3, 3)
-      write(p, file = fileDes3)
+      #p <- phraser(preparedLine2, 3)
+      #write(p, file = fileDes3)
+      #p <- phraser(preparedLine3, 3)
+      #write(p, file = fileDes3)
     }
     close(fileDes2)
     close(fileDes3)
@@ -137,7 +133,7 @@ alphabetize_raw_fn_tri <- function(srcFilename) {
 
 
 
-#buildmapping()
-#alphabetize_raw()
+buildmapping()
+alphabetize_raw()
 # Just called the manual sorting for the Twitter textual data.
 # cause it wasn't otherwise getting written to disk.
