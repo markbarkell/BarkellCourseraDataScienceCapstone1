@@ -78,8 +78,8 @@ buildmapping <- function() {
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
-      preparedLine2 <- gsub("(i|you|we|they|s?he) (would|d|a?m|ll|will|have|ve|shall|be|can|is) ", "sptrv ", preparedLine, perl = TRUE)
-      preparedLine2 <- gsub("(i|you|we|they|s?he) (wouldn't|would not|a?m|will not|haven't|have not|shall not|cannot|can not|isn't|is not) ", "sptrvn ", preparedLine2, perl = TRUE) 
+      preparedLine2 <- gsub("(i|you|we|they|s?he|it) (would|d|a?m|ll|will|have|ve|shall|be|can|is) ", "sptrv ", preparedLine, perl = TRUE)
+      preparedLine2 <- gsub("(i|you|we|they|s?he|it) (wouldn't|would not|a?m|will not|haven't|have not|shall not|cannot|can not|isn't|is not) ", "sptrvn ", preparedLine2, perl = TRUE) 
       preparedLine3 <- gsub("(\\w+) (would|d|a?m|ll|will|have|ve|shall|be|can|is) ", "gsptrvn ", preparedLine, perl = TRUE)
       preparedLine3 <- gsub("(\\w+) (wouldn't|would not|a?m|will not|haven't|have not|shall not|cannot|can not|isn't|is not) ", "gsptrvn ", preparedLine3, perl = TRUE) 
       
