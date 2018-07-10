@@ -14,7 +14,7 @@
 
 library(ngram)
 
-
+source("./subs.R")
 
 urlOfCapstoneSeedData <- "https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/Coursera-SwiftKey.zip"
 fileNameOfCapstoneSeedData <- "Coursera-SwiftKey.zip"
@@ -77,21 +77,21 @@ buildmapping <- function() {
       preparedLine <- sub("^\\s*", "", preparedLine, perl = TRUE)
       preparedLine <- sub("\\s*$", "", preparedLine, perl = TRUE)
       preparedLine <- gsub("\\s\\s", " ", preparedLine, perl = TRUE)
-      #preparedLine2 <- gsub("\\b(a|the|an|he|she|it|i|you|they|them|we|us|of us|of them|their|yours?|mine|not|no|yes|without|with|out|in|case|because|therefore|yet)\\b", " ", preparedLine, perl = TRUE)
-      #preparedLine3 <- gsub("\\b(a|the|an|and|or|not)\\b", " ", preparedLine, perl = TRUE)
+      
+      v <- manysubs(preparedLine)
+
+
       #print(preparedLine)
       p <- phraser(preparedLine, 2)
       write(p, file = fileDes2)
-      #p <- phraser(preparedLine2, 2)
-      #write(p, file = fileDes2)
-      #p <- phraser(preparedLine3, 2)
-      #write(p, file = fileDes2)
+      p <- phraser(v, 2)
+      write(p, file = fileDes2)
+      
       p <- phraser(preparedLine, 3)
       write(p, file = fileDes3)
-      #p <- phraser(preparedLine2, 3)
-      #write(p, file = fileDes3)
-      #p <- phraser(preparedLine3, 3)
-      #write(p, file = fileDes3)
+      p <- phraser(v, 3)
+      write(p, file = fileDes3)
+      
     }
     close(fileDes2)
     close(fileDes3)

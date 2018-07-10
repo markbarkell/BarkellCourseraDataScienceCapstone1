@@ -190,14 +190,19 @@ std::string buildSearchString(int argc, const char** argv)
 
 std::map<std::string, uint16_t> readCntFile()
 {
-  std::map<std::string, uint16_t> v;
+ 
+}
+
+std::multimap<uint16_t, std::string> counts()
+{
+  std::multimap<uint16_t, std::string> v;
    std::ifstream is(cntFileName);
    char buf[recordSize];
    while (!is.eof() && is.good()) {
      is.read(buf, sizeof(buf)/sizeof(*buf));
      std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
      uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
-     auto p = std::make_pair(value, count);
+     auto p = std::make_pair(count, value);
      v.insert(p);
    }
    return v;
@@ -269,6 +274,35 @@ void predictValues(int argc, const char** argv)
   predictFromString(ss, cntInfo);
 }
 
+std::string oneendingspace(std::string const& s)
+{
+   std::ostringstream oss;
+  for(auto iter = s.cbegin(); iter != s.cend(); ++iter)
+    {
+      if (iter + 1 < s.cend() && *(iter ) == ' ' && *(iter + 1) == ' ')
+	{
+	  break;
+	}
+      oss << *iter;
+    }
+  return oss.str();
+}
+
+std::string spacelobar(std::string const& s)
+{
+  std::ostringstream oss;
+  for(auto iter = s.cbegin(); iter != s.cend(); ++iter)
+    {
+      if (iter + 1 < s.cend() && *(iter ) == ' ' && *(iter + 1) == ' ' )
+	{
+	  break;
+	}
+      oss << (*iter == ' ' ? '_' : *iter);
+    }
+  return oss.str();
+}
+
+
 int main(int argc, const char** argv)
 {
   std::cout << "argc " << argc << std::endl;
@@ -278,6 +312,28 @@ int main(int argc, const char** argv)
   if (argc == 2 && std::string(argv[1]) == std::string("--generate")) {
     std::cout << "generating" << std::endl;
     combineStreams();
+  }
+  else if (argc == 3 && std::string(argv[1]) == std::string("--tokenizetexts")) {
+    std::string top(argv[2]);
+    int topCount;
+    std::istringstream iss(top);
+    std::ofstream ofs("mapping.txt");
+    std::ofstream rofs("subs.R");
+    iss >> topCount;
+    auto model = counts();
+    auto mmi = model.crbegin();
+    rofs << "manysubs <- function(v) {" << std::endl;
+    for(int i = 0; i < topCount && mmi != model.crend(); ++i, ++mmi) {
+      auto lb = spacelobar(mmi->second);
+      auto es = oneendingspace(mmi->second);
+      rofs << "v <- gsub(\""
+		<< es << "\",\""
+		<< lb
+		<< "\", v)" << std::endl;
+      ofs << es << "|" << lb << std::endl;
+    }
+    rofs << "return (v)" << std::endl;
+    rofs << "}" << std::endl;
   }
   else if (argc == 2 && std::string(argv[1]) == std::string("--endswith")) {    
     std::cout << "About read model from file" << std::endl;
