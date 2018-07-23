@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <sstream>
 #include <vector>
+#include <list>
 #include <map>
 #include <set>
 #include <string>
@@ -184,7 +185,7 @@ std::string buildSearchString(std::vector<std::string> const v)
   for(auto item : v) {
     oss << item << " ";
   }
-  std::cout << "The search string is going to be: '" << oss.str() << "'" << std::endl;
+  //  std::cout << "The search string is going to be: '" << oss.str() << "'" << std::endl;
   return (oss.str());
 }
 
@@ -193,37 +194,37 @@ std::map<std::string, uint16_t> readCntFile()
 {
   std::cout << "Debug:" << __func__ << ":" << __FILE__ << ":" << __LINE__ << std::endl;
   std::map<std::string, uint16_t> v;
-   std::ifstream is(cntFileName);
-   char buf[recordSize];
-   long long cnt = 0;
-   while (!is.eof() && is.good()) {
-     is.read(buf, sizeof(buf)/sizeof(*buf));
-     std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
-     uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
-     auto p = std::make_pair(value, count);
-     v.insert(p);
-     ++cnt;
-     if (cnt % 1000000 == 0) {
-       std::cout << "Debug:" << "READ " << cnt << " " << __func__ << ":" << __FILE__ << ":" << __LINE__ << std::endl;
-     }
-   }
-   std::cout << "Debug:" << __func__ << ":" << __FILE__ << ":" << __LINE__ << std::endl;
-   return v;
+  std::ifstream is(cntFileName);
+  char buf[recordSize];
+  long long cnt = 0;
+  while (!is.eof() && is.good()) {
+    is.read(buf, sizeof(buf)/sizeof(*buf));
+    std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
+    uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
+    auto p = std::make_pair(value, count);
+    v.insert(p);
+    ++cnt;
+    if (cnt % 1000000 == 0) {
+      std::cout << "Debug:" << "READ " << cnt << " " << __func__ << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+    }
+  }
+  std::cout << "Debug:" << __func__ << ":" << __FILE__ << ":" << __LINE__ << std::endl;
+  return v;
 }
 
 std::multimap<uint16_t, std::string> counts()
 {
   std::multimap<uint16_t, std::string> v;
-   std::ifstream is(cntFileName);
-   char buf[recordSize];
-   while (!is.eof() && is.good()) {
-     is.read(buf, sizeof(buf)/sizeof(*buf));
-     std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
-     uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
-     auto p = std::make_pair(count, value);
-     v.insert(p);
-   }
-   return v;
+  std::ifstream is(cntFileName);
+  char buf[recordSize];
+  while (!is.eof() && is.good()) {
+    is.read(buf, sizeof(buf)/sizeof(*buf));
+    std::string value(buf, sizeof(buf)/sizeof(*buf) - sizeof(uint16_t));
+    uint16_t count = *(reinterpret_cast<uint16_t*>(&(buf[desiredStringSize])));
+    auto p = std::make_pair(count, value);
+    v.insert(p);
+  }
+  return v;
 }
 
 
@@ -249,9 +250,10 @@ std::string getLastWord(std::string const& full)
   return r;
 }
 
-void predictFromString(std::string const& ss,
-		       std::map<std::string, uint16_t> const& cntInfo,
-		       std::set<std::string> const* endsWith = nullptr)
+std::map<std::string, uint32_t> predictFromString(std::string const& ss,
+						  std::map<std::string, uint16_t> const& cntInfo,
+						  std::set<std::string> const* endsWith = nullptr,
+						  bool allowPrinting = false)
 {
 
   //  std::cout << "Debug: " <<  __func__ << "," << __FILE__ << ":" << __LINE__ << std::endl
@@ -259,12 +261,16 @@ void predictFromString(std::string const& ss,
   //	    << "size: " << cntInfo.size() << std::endl;
   //  std::cout.flush();
 
+  std::map<std::string, uint32_t> loc;
+  
   auto iter = cntInfo.lower_bound(ss);
-  std::cout << "Finished lower bounds on " << ss << std::endl; std::cout.flush();
+  if (allowPrinting) { std::cout << "Finished lower bounds on " << ss << std::endl; std::cout.flush(); }
   if (iter != cntInfo.cend()) {
-    std::cout << "Iter String Value '" << iter->first << "'" << std::endl;
-    std::cout << "Iter String Count " << iter->second << std::endl;
-    std::cout.flush();
+    if (allowPrinting) {
+      std::cout << "Iter String Value '" << iter->first << "'" << std::endl;
+      std::cout << "Iter String Count " << iter->second << std::endl;
+      std::cout.flush();
+    }
     std::map<uint16_t, std::vector<std::string> > cnts;
     do  {
       cnts[iter->second].push_back(iter->first);
@@ -277,19 +283,31 @@ void predictFromString(std::string const& ss,
 	    iterV != citerMap->second.cend(); ++iterV) {
 	  std::string lastWord = getLastWord((*iterV));
 	  if (!endsWith || endsWith && endsWith->find(lastWord) != endsWith->cend()) {
-	    if (!doneOccurrences) {
+	    if (!doneOccurrences && allowPrinting) {
 	      std::cout << "occurrences: " << citerMap->first << ":" << std::endl;
 	    }
 	    doneOccurrences = true;
 	    std::cout << (*iterV) << std::endl;
+	    auto keyIter = loc.find(*iterV);
+	    uint32_t curCount = 0;
+	    if (keyIter != loc.end()) {
+	      auto curCount = keyIter->second;
+	      keyIter->second += citerMap->first;
+	    }
+	    else {
+	      loc.insert(std::make_pair(*iterV, citerMap->first));
+	    }
 	  }
 
 	}
       }
   }
   else {
-    std::cout << "Nothing to report";
+    if (!allowPrinting) {
+      std::cout << "Nothing to report";
+    }
   }
+  return loc;
 }
 
 void predictValues()
@@ -311,7 +329,7 @@ void predictValues()
 
 std::string oneendingspace(std::string const& s)
 {
-   std::ostringstream oss;
+  std::ostringstream oss;
   for(auto iter = s.cbegin(); iter != s.cend(); ++iter)
     {
       if (iter + 1 < s.cend() && *(iter ) == ' ' && *(iter + 1) == ' ')
@@ -338,6 +356,15 @@ std::string spacelobar(std::string const& s)
 }
 
 
+std::map<std::string, uint32_t> accumulate(std::map<std::string, uint32_t> const& acc, std::map<std::string, uint32_t> const& p) {
+  std::map<std::string, uint32_t> r(acc);
+  for(auto item : p) {
+    // Certainly could make this faster.
+    r[item.first] = r[item.first] + item.second;
+  }
+  return r;
+}
+
 int main(int argc, const char** argv)
 {
   std::cout << "argc " << argc << std::endl;
@@ -362,9 +389,9 @@ int main(int argc, const char** argv)
       auto lb = spacelobar(mmi->second);
       auto es = oneendingspace(mmi->second);
       rofs << "v <- gsub(\""
-		<< es << "\",\""
-		<< lb
-		<< "\", v)" << std::endl;
+	   << es << "\",\""
+	   << lb
+	   << "\", v)" << std::endl;
       ofs << es << "|" << lb << std::endl;
     }
     rofs << "return (v)" << std::endl;
@@ -397,6 +424,43 @@ int main(int argc, const char** argv)
     }
     
   }
+  // else if (argc == 2 && std::string(argv[1]) == "--mergewords") {    
+  //   auto model = readCntFile();
+  //   std::map<std::string, uint32_t> acc;
+  //   while (true) {
+  //     std::string word;
+  //     std::list<std::string> words;
+  //     std::cout << "What's the words (end with dash):" << std::endl;
+  //     std::cout.flush();
+  //     while (std::cin >> word && word != "-") {
+  // 	words.push_back(word);
+  // 	while (words.size() > 2) {
+  // 	  words.pop_front();
+  // 	}
+  // 	std::vector<std::string> v;
+  // 	for(auto item : words) {
+  // 	  v.push_back(item);
+  // 	}
+  // 	auto ss = buildSearchString(v);
+  // 	auto p = predictFromString(ss, model);
+  // 	acc = accumulate(acc, p);
+  // 	std::cout << "Accumlating..." << std::endl;	
+  //     }
+
+  //     std::cout << "Gathering..." <<std::endl;
+  //     std::cout.flush();
+  //     std::map<uint32_t, std::string> mm;
+  //     for(auto item : acc) {
+  // 	if (item.second > 1) {
+  // 	  mm.insert(std::make_pair(item.second, item.first));
+  // 	}
+  //     }
+  //     for(auto item : mm) {
+  // 	std::cout << "Occurrence: " << item.first << "passage: '" << item.second << "'" << std::endl;
+  //     }
+  //   }
+    
+  // }
   else if (argc == 1) {
     std::cout << "predicting" << std::endl;
     predictValues();
