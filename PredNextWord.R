@@ -52,12 +52,17 @@ buildAllModel <- function() {
 predictBasedOnPrev <- function(model, txt) {
   linepart <- myPreprocessLine(txt)
   existingWords <- strsplit(linepart, " ")[[1]]
-  candidates <- data.frame(item1 = c(), item2 = c(), n = c())
+  candidates <- data.frame(stringsAsFactors = FALSE)
+  
+  #names(candidates) <- c("item1", "item2", "n")
   for(wordInLine in existingWords) {
     #print(paste("word in line", wordInLine))
-    m <- (model %>% filter(item1 == wordInLine))[1:10,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
+    m <- (model %>% filter(item1 == wordInLine))[1:100,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
     candidates <- rbind(candidates, m) 
   }
+  candidates <- candidates %>% group_by(item2) %>% summarise(n = sum(n))
+  candidates <- candidates %>% arrange(desc(n))
+  candidates <- candidates[1:10,]
   return (candidates)
 }
 
