@@ -51,9 +51,10 @@ buildAllModel <- function() {
 
 predictBasedOnPrev <- function(model, txt) {
   linepart <- myPreprocessLine(txt)
-  existingWords <- strsplit(linepart, " ")
+  existingWords <- strsplit(linepart, " ")[[1]]
   candidates <- data.frame(item1 = c(), item2 = c(), n = c())
-  for(wordInLine in linepart) {
+  for(wordInLine in existingWords) {
+    #print(paste("word in line", wordInLine))
     m <- (model %>% filter(item1 == wordInLine))[1:10,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
     candidates <- rbind(candidates, m) 
   }
