@@ -14,7 +14,7 @@ GetFilesLines <- function(files) {
   for(file in files) {
     lines = readLines(file)
     doc = sapply(1:length(lines), function(ll) file)
-    fileFrame <- data.frame(line = lines, doc = doc)
+    fileFrame <- data.frame(line = lines, doc = doc, stringsAsFactors = FALSE)
     filesFrame <- rbind(filesFrame, fileFrame)
   }
   return (filesFrame)
@@ -41,7 +41,7 @@ myPreprocessLines <- function (lines) {
 }
 
 linedata <- function(lineAndDoc) {
-  filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) %>% bind_tf_idf(word, doc, n)
+  filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) %>% bind_tf_idf(word, doc, linenum)
   info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE) %>% filter(n > 10)
   data <- info #info[which(info$correlation > .15 && info$correlation < .99),]
   return (data)
