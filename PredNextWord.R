@@ -34,7 +34,7 @@ myPreprocessLines <- function (lines) {
 linedata <- function(lines) {
   dflines <- data.frame(line = lines, foo = "", stringsAsFactors = FALSE)
   filteredInfo <- dflines %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word))
-  info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE)
+  info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE) %>% filter(n > 10)
   data <- info #info[which(info$correlation > .15 && info$correlation < .99),]
   return (data)
 }
@@ -49,3 +49,15 @@ buildAllModel <- function() {
                        "final/en_US/en_US.news.txt")))
 }
 
+predictBasedOnPrev <- function(model, txt) {
+  linepart <- myPreprocessLine(txt)
+  existingWords <- strsplit(linepart, " ")
+  candidates <- data.frame(item1 = c(), item2 = c(), n = c())
+  for(wordInLine in linepart) {
+    m <- (model %>% filter(item1 == wordInLine))[1:10,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
+    candidates <- rbind(candidates, m) 
+  }
+  return (candidates)
+}
+
+# ba <- buildAllModel()
