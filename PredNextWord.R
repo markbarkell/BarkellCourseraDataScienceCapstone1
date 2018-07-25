@@ -8,12 +8,21 @@ library(tidytext)
 library(tidyr)
 library(ngram)
 library(widyr)
-buildModel <- function(files) {
-  lines <- c()
+
+GetFilesLines <- function(files) {
+  filesFrame <- data.frame(stringsAsFactors = FALSE)
   for(file in files) {
-    lines <- append(lines,readLines(file))
+    lines = readLines(file)
+    doc = sapply(1:length(lines), function(ll) file)
+    fileFrame <- data.frame(line = lines, doc = doc)
+    filesFrame <- rbind(filesFrame, fileFrame)
   }
-  return(linedata(myPreprocessLines(lines)))
+  return (filesFrame)
+}
+
+buildModel <- function(files) {
+  filesFrame <- GetFilesLines(files)
+  return(linedata(myPreprocessLines(filesFrame)))
 }
 
 myPreprocessLine <- function (line) {
@@ -31,9 +40,8 @@ myPreprocessLines <- function (lines) {
   return (s)
 }
 
-linedata <- function(lines) {
-  dflines <- data.frame(line = lines, foo = "", stringsAsFactors = FALSE)
-  filteredInfo <- dflines %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word))
+linedata <- function(lineAndDoc) {
+  filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) %>% bind_tf_idf(word, doc, n)
   info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE) %>% filter(n > 10)
   data <- info #info[which(info$correlation > .15 && info$correlation < .99),]
   return (data)
