@@ -12,7 +12,7 @@ library(widyr)
 GetFilesLines <- function(files) {
   filesFrame <- data.frame(stringsAsFactors = FALSE)
   for(file in files) {
-    lines = readLines(file)
+    lines = readLines(file, n = 10000)
     doc = sapply(1:length(lines), function(ll) file)
     fileFrame <- data.frame(line = lines, doc = doc, stringsAsFactors = FALSE)
     filesFrame <- rbind(filesFrame, fileFrame)
@@ -22,7 +22,9 @@ GetFilesLines <- function(files) {
 
 buildModel <- function(files) {
   filesFrame <- GetFilesLines(files)
-  return(linedata(myPreprocessLines(filesFrame)))
+  lineAndDoc <- myPreprocessLines(filesFrame)
+  r <- linedata(lineAndDoc)
+  return(r)
 }
 
 myPreprocessLine <- function (line) {
@@ -34,17 +36,24 @@ myPreprocessLine <- function (line) {
   return (preparedLine)
 }
 
-myPreprocessLines <- function (lines) {
-  s <- (sapply(lines, function(ll) { myPreprocessLine(ll) }))
-  s <- s[which(nchar(s) > 0)]
+myPreprocessLines <- function (lineAndDoc) {
+    s <- data.frame(stringsAsFactors = FALSE)
+    for(ll in 1:(dim(lineAndDoc))[1]) {
+      pLine <- myPreprocessLine(lineAndDoc[ll,"line"])
+      if (nchar(pLine) > 0) {
+        r <- data.frame(line = pLine, doc = lineAndDoc[ll,"doc"], stringsAsFactors = FALSE)
+        s <- rbind(s, r)
+      #  print(pLine)
+      }
+    }
   return (s)
 }
 
 linedata <- function(lineAndDoc) {
-  filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) %>% bind_tf_idf(word, doc, linenum)
+  filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) 
   info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE) %>% filter(n > 10)
-  data <- info #info[which(info$correlation > .15 && info$correlation < .99),]
-  return (data)
+  filteredInfo <- filteredInfo %>%  bind_tf_idf(word, doc, linenum)
+  return (list(filteredInfo, info))
 }
 
 buildTwitterModel <- function() {
@@ -62,17 +71,22 @@ predictBasedOnPrev <- function(model, txt) {
   existingWords <- strsplit(linepart, " ")[[1]]
   candidates <- data.frame(stringsAsFactors = FALSE)
   coee <- 1
+  cntsModel <- model[[2]]
+  tfModels <- model[[1]]
   #names(candidates) <- c("item1", "item2", "n")
   for(wordInLine in existingWords) {
     #print(paste("word in line", wordInLine))
-    m <- (model %>% filter(item1 == wordInLine))[1:100,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
-    m[,"n"] <- m[,"n"] * coee
-    coee = coee * 2
+    m <- (cntsModel %>% filter(item1 == wordInLine))[1:100,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
+    m$word <- m$item2
+    tfSub <- tfModels %>% filter(word %in% m$word) %>% select(word, idf) %>% group_by(word) %>% distinct()
+    g <- (inner_join(tfSub, m) %>% group_by(word)) 
+    m$c <- coee * g[,"n"] * abs(g[,"idf"])
+    coee = coee * 1.1
     candidates <- rbind(candidates, m) 
   }
   candidates <- candidates %>% filter(!item2 %in% existingWords)
-  candidates <- candidates %>% group_by(item2) %>% summarise(n = sum(n))
-  candidates <- candidates %>% arrange(desc(n))
+  candidates <- candidates %>% group_by(item2) %>% summarise(c = sum(c))
+  candidates <- candidates %>% arrange(desc(c))
   candidates <- candidates[1:100,]
   return (candidates)
 }
