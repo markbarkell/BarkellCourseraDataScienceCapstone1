@@ -8,11 +8,13 @@ library(tidytext)
 library(tidyr)
 library(ngram)
 library(widyr)
+library(tibble)
 
 GetFilesLines <- function(files) {
   filesFrame <- data.frame(stringsAsFactors = FALSE)
   for(file in files) {
-    lines = readLines(file, n = 10000)
+    print(paste("file name being processed", file))
+    lines = readLines(file, n = (250000 %/% length(files)))
     doc = sapply(1:length(lines), function(ll) file)
     fileFrame <- data.frame(line = lines, doc = doc, stringsAsFactors = FALSE)
     filesFrame <- rbind(filesFrame, fileFrame)
@@ -43,6 +45,9 @@ myPreprocessLines <- function (lineAndDoc) {
       if (nchar(pLine) > 0) {
         r <- data.frame(line = pLine, doc = lineAndDoc[ll,"doc"], stringsAsFactors = FALSE)
         s <- rbind(s, r)
+        if (ll %% 10000 == 0) {
+          print(paste("Read file lines", ll))
+        }
       #  print(pLine)
       }
     }
@@ -69,25 +74,42 @@ buildAllModel <- function() {
 predictBasedOnPrev <- function(model, txt) {
   linepart <- myPreprocessLine(txt)
   existingWords <- strsplit(linepart, " ")[[1]]
-  candidates <- data.frame(stringsAsFactors = FALSE)
+  fullExistingWords <- existingWords
+  ew <- c()
+  for(word in existingWords) {
+    ew <- append(ew[which(!(ew %in% word))], word)
+  }
+  f <- 100
+  start <- if (length(ew)-f < 1) { 0 } else { length(ew)-f }
+  existingWords <- ew[(start):length(ew)]
+  candidates <- NULL
   coee <- 1
   cntsModel <- model[[2]]
   tfModels <- model[[1]]
-  #names(candidates) <- c("item1", "item2", "n")
+  cur <- 1
   for(wordInLine in existingWords) {
-    #print(paste("word in line", wordInLine))
-    m <- (cntsModel %>% filter(item1 == wordInLine))[1:100,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% existingWords)
+    print(paste("word in line", wordInLine))
+    m <- (cntsModel %>% filter(item1 == wordInLine))[1:1000,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% fullExistingWords)
     m$word <- m$item2
     tfSub <- tfModels %>% filter(word %in% m$word) %>% select(word, idf) %>% group_by(word) %>% distinct()
     g <- (inner_join(tfSub, m) %>% group_by(word)) 
-    m$c <- coee * g[,"n"] * abs(g[,"idf"])
-    coee = coee * 1.1
-    candidates <- rbind(candidates, m) 
+    m$c <- (coee * g[,"n"] * abs(g[,"idf"]))[,]
+    if (dim(m)[1] > 0) {
+      #m$rowid <- sapply(cur:( (cur-1) + dim(m)[1]), function(it) paste0(it, ""))
+      remove_rownames(m)
+      cur <- cur + dim(m)[1] + 100
+      coee <- coee * 1.1
+    }
+    if (is.null(candidates)) {
+      candidates <- m
+    } else if (dim(m)[1] > 0) {
+      candidates <- union(candidates, m)
+    }
   }
-  candidates <- candidates %>% filter(!item2 %in% existingWords)
+  candidates <- candidates %>% filter(!item2 %in% fullExistingWords)
   candidates <- candidates %>% group_by(item2) %>% summarise(c = sum(c))
   candidates <- candidates %>% arrange(desc(c))
-  candidates <- candidates[1:100,]
+  candidates <- candidates[1:1000,]
   return (candidates)
 }
 
