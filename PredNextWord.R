@@ -9,18 +9,55 @@ library(tidyr)
 library(ngram)
 library(widyr)
 library(tibble)
+library(topicmodels)
+
+
+topicSeps <- 100
+
+fileNames <- c("final/en_US/en_US.twitter.txt",
+               "final/en_US/en_US.blogs.txt",
+               "final/en_US/en_US.news.txt")
 
 GetFilesLines <- function(files) {
   filesFrame <- data.frame(stringsAsFactors = FALSE)
   for(file in files) {
     print(paste("file name being processed", file))
-    lines = readLines(file, n = (250000 %/% length(files)))
+    lines = readLines(file)
     doc = sapply(1:length(lines), function(ll) file)
     fileFrame <- data.frame(line = lines, doc = doc, stringsAsFactors = FALSE)
     filesFrame <- rbind(filesFrame, fileFrame)
   }
   return (filesFrame)
 }
+
+fromDataLDA <- function(data)
+{
+  # Reference: Page 78 of Text Mining With R: A TIDY Approach.
+  dtm <- (data %>% unnest_tokens(word, line) %>% count(doc, word) %>% cast_dtm(doc, word, n))
+  ldda <- LDA(dtm, k = topicSeps, control = list(seed = 20180730))
+  return (ldda)
+}
+
+fromDataLDABeta <- function(data) {
+  d <- fromDataLDA(data)
+  b <- tidy(d, matrix = "beta")
+}
+
+buildLDAOfFiles <- function(files) {
+  filesFrame <- GetFilesLines(files)
+  lineAndDoc <- myPreprocessLines(filesFrame)
+  d <- (fromDataLDA(lineAndDoc))
+  return (d)
+}
+
+buildAllLDA <- function()
+{
+  d <- buildLDAOfFiles(
+    fileNames
+  )
+  return (d)
+}
+
 
 buildModel <- function(files) {
   filesFrame <- GetFilesLines(files)
@@ -58,7 +95,9 @@ linedata <- function(lineAndDoc) {
   filteredInfo <- lineAndDoc %>% mutate(linenum = row_number()) %>% unnest_tokens(word, line) %>% filter(!(word %in% stop_words$word)) 
   info <- filteredInfo %>% pairwise_count(word, linenum, sort = TRUE) %>% filter(n > 10)
   filteredInfo <- filteredInfo %>%  bind_tf_idf(word, doc, linenum)
-  return (list(filteredInfo, info))
+  betas <- fromDataLDABeta(lineAndDoc)
+  betas <-  betas %>% group_by(term) %>% filter(beta == max(beta))
+  return (list(filteredInfo, info, betas))
 }
 
 buildTwitterModel <- function() {
@@ -66,9 +105,11 @@ buildTwitterModel <- function() {
 }
 
 buildAllModel <- function() {
-  return (buildModel(c("final/en_US/en_US.twitter.txt",
+  model <-buildModel(c("final/en_US/en_US.twitter.txt",
                        "final/en_US/en_US.blogs.txt",
-                       "final/en_US/en_US.news.txt")))
+                       "final/en_US/en_US.news.txt")
+                      )
+  return (model)
 }
 
 predictBasedOnPrev <- function(model, txt) {
@@ -79,21 +120,27 @@ predictBasedOnPrev <- function(model, txt) {
   for(word in existingWords) {
     ew <- append(ew[which(!(ew %in% word))], word)
   }
-  f <- 100
+  f <- 50
   start <- if (length(ew)-f < 1) { 0 } else { length(ew)-f }
   existingWords <- ew[(start):length(ew)]
   candidates <- NULL
   coee <- 1
+  betas <- model[[3]]
+  betas$word = betas$term
   cntsModel <- model[[2]]
   tfModels <- model[[1]]
   cur <- 1
+  topicCounts <- sapply(1:topicSeps, function(it) 0)
   for(wordInLine in existingWords) {
     print(paste("word in line", wordInLine))
-    m <- (cntsModel %>% filter(item1 == wordInLine))[1:1000,] %>% filter(!is.na(item1)) %>% filter(!item2 %in% fullExistingWords)
+    m <- (cntsModel %>% filter(item1 == wordInLine)) %>% filter(!is.na(item1)) %>% filter(!item2 %in% fullExistingWords)
     m$word <- m$item2
     tfSub <- tfModels %>% filter(word %in% m$word) %>% select(word, idf) %>% group_by(word) %>% distinct()
-    g <- (inner_join(tfSub, m) %>% group_by(word)) 
-    m$c <- (coee * g[,"n"] * abs(g[,"idf"]))[,]
+    tmg <- (inner_join(tfSub, m))
+    topicId <- (betas[which(betas$word == wordInLine),"topic"])[[1]]
+    topicCounts[topicId] = topicCounts[topicId] + 1
+    g <- (inner_join(tmg, betas))
+    m$c <- (coee * abs(g[,"idf"]))[,]
     if (dim(m)[1] > 0) {
       #m$rowid <- sapply(cur:( (cur-1) + dim(m)[1]), function(it) paste0(it, ""))
       remove_rownames(m)
@@ -106,10 +153,13 @@ predictBasedOnPrev <- function(model, txt) {
       candidates <- union(candidates, m)
     }
   }
-  candidates <- candidates %>% filter(!item2 %in% fullExistingWords)
-  candidates <- candidates %>% group_by(item2) %>% summarise(c = sum(c))
-  candidates <- candidates %>% arrange(desc(c))
-  candidates <- candidates[1:1000,]
+  usedTopics <- topicCounts[which(topicCounts > 0)]
+  ut <- data.frame(topic = 1:length(usedTopics), topiccount = usedTopics )
+  slimbetas <- betas[which(betas$topic %in% usedTopics),]
+  candidates <- candidates %>% filter(!item2 %in% fullExistingWords) #%>% filter(item2 %in% slimbetas$term)
+  candidates <- inner_join(inner_join(candidates,betas), ut) %>% group_by(item2,topic,topiccount) %>% summarise(c = sum(c))
+  candidates <- candidates %>% arrange(topiccount, c)
+  #candidates <- candidates[1:1000,]
   return (candidates)
 }
 
