@@ -153,12 +153,12 @@ predictBasedOnPrev <- function(model, txt) {
       candidates <- union(candidates, m)
     }
   }
-  usedTopics <- topicCounts[which(topicCounts > 0)]
+  usedTopics <- topicCounts[which(topicCounts >= 0)]
   ut <- data.frame(topic = 1:length(usedTopics), topiccount = usedTopics )
   slimbetas <- betas[which(betas$topic %in% usedTopics),]
   candidates <- candidates %>% filter(!item2 %in% fullExistingWords) #%>% filter(item2 %in% slimbetas$term)
   candidates <- inner_join(inner_join(candidates,betas), ut) %>% group_by(item2,topic,topiccount) %>% summarise(c = sum(c))
-  candidates <- candidates %>% arrange(topiccount, c)
+  candidates <- candidates %>% arrange(c, topiccount)
   #candidates <- candidates[1:1000,]
   return (candidates)
 }
