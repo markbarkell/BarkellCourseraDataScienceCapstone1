@@ -144,7 +144,7 @@ predictBasedOnPrev <- function(model, txt) {
       sentimentOfPhrase <- sentimentOfPhrase * (if (containsNegation) {-1} else {1})
       sentimentDirection <- sentimentDirection * -1
     }
-    sentimentOfPhrase <- sentimentOfPhrase + sentimentDirection * sentimentOfWord
+    sentimentOfPhrase <- sentimentOfPhrase * sentimentDirection * sentimentOfWord
     m <- (cntsModel %>% filter(item1 == wordInLine)) %>% filter(!is.na(item1)) %>% filter(!item2 %in% fullExistingWords)
     m$word <- m$item2
     tfSub <- tfModels %>% filter(word %in% m$word) %>% select(word, idf) %>% group_by(word) %>% distinct()
@@ -171,11 +171,11 @@ predictBasedOnPrev <- function(model, txt) {
   slimbetas <- betas[which(betas$topic %in% usedTopics),]
   candidates <- candidates %>% filter(!item2 %in% fullExistingWords) #%>% filter(item2 %in% slimbetas$term)
   candidates <- inner_join(inner_join(candidates,betas), ut) %>% group_by(word,topic,topiccount) %>% summarise(c = sum(c))
-  candidates$sentiment <- sapply(left_join(candidates, sent)$score, function(s) if (is.na(s)) {0} else {s})
-  if (sentimentOfPhrase > 0) {
-    candidates <- candidates %>% arrange(sentiment, c, topiccount)
+  candidates$sentiment <- sapply(left_join(candidates, sent)$score, function(s) if (is.na(s)) {0} else {s %/% abs(s)})
+  if (sentimentOfPhrase < 0) {
+    candidates <- candidates %>% arrange(floor(c*10), sentiment, topiccount)
   } else {
-    candidates <- candidates %>% arrange(desc(sentiment),c, topiccount)
+    candidates <- candidates %>% arrange(floor(c*10), desc(sentiment), topiccount)
   }
   #candidates <- candidates[1:1000,]
   return (candidates)
