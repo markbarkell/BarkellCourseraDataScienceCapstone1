@@ -22,7 +22,7 @@ GetFilesLines <- function(files) {
   filesFrame <- data.frame(stringsAsFactors = FALSE)
   for(file in files) {
     print(paste("file name being processed", file))
-    lines = readLines(file, n =  500 * 1000 %/% 3)
+    lines = readLines(file)
     doc = sapply(1:length(lines), function(ll) file)
     fileFrame <- data.frame(line = lines, doc = doc, stringsAsFactors = FALSE)
     filesFrame <- rbind(filesFrame, fileFrame)
