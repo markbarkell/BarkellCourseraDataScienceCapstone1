@@ -3,6 +3,7 @@
 *.html
 rsconnect/
 a.out
+*.cnt.rds
 \#*
 *~
 
