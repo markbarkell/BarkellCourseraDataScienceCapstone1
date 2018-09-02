@@ -1,0 +1,42 @@
+---
+title: "Predicting Next Words"
+author: "Mark Barkell"
+date: "September 2, 2018"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Motivation
+
+When typing on a Smart Phone's Keyboard a user may desire to have a list of words that could be that which he or she would desire to use in sequence as messages are written.
+
+This document is written for Coursework.
+
+## Prototype Solution
+
+There are at least two types of interesting predictions
+
+- Predictions based upon the words already choosen.
+
+- Predictions based upon the words already choosen using the last word as a partial match.
+
+So, the prototype written can do both of these.  
+
+The user enters in the words, clicks predict, and gets words that potentially complete.   As it moves from an RShiny App in the Web to a Smart Keyboard, the predictions will be done on the device.
+
+## Mathimatical Foundation
+
+Inverse Term Document Frequency is used to figure out which words are most likely associated with the words the user submitted.   This is also combined with sentiment analysis with negation detection to help narrow the result field.  In the case of predicting based on the partial last word, regular expressions are used.  
+
+The data used is a combination of Twitter, Blogs, and News text.  There was so much data that the techinique used for limiting data was to limit the number of rows to read. Filtering was also done upon making sure that the words were used 10 times so as to not fill up the model with useless details.
+
+## Location of the Full Source
+
+The functionality used in building up the model may be viewed at:
+<https://github.com/markbarkell/BarkellCourseraDataScienceCapstone1/>
+
+
+
