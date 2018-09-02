@@ -19,6 +19,7 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
       sidebarPanel(
+        withTags(p("This program predicts what words are likely to be desired as the next word.   The program has two outputs.  It may predict either upon all of the words, or, may be filtered upon the partial match of the last word.")),
          textInput("queryText",
                      "Current Text Needing Suggestions"
                      ),
